@@ -5,14 +5,6 @@
 repeat task.wait() until game:IsLoaded()
 
 -- ============================================
--- 🔐 KEY SYSTEM INTEGRATION (Uncomment to enable)
--- ============================================
-local KeySystem = loadstring(game:HttpGet("https://raw.githubusercontent.com/mriya23/Fish-It/key-system/Project_code/Misc/KeySystem.lua"))()
-if not KeySystem.Show() then
-    return -- Stop script if key is invalid / cancelled
-end
-
--- ============================================
 -- UNIVERSAL GUI LOCK (Prevents ALL duplicate GUIs)
 -- ============================================
 -- Check if ANY GUI is already running
@@ -379,7 +371,7 @@ local CRITICAL_MODULES = {"HideStats", "Webhook", "Notify"}
 LoadingNotification.Create()
 
 -- Load SecurityLoader
-local SecurityLoader = loadstring(game:HttpGet("https://raw.githubusercontent.com/mriya23/Fish-It/main/SecurityLoader.lua"))()
+local SecurityLoader = loadstring(game:HttpGet("https://raw.githubusercontent.com/NYXOXOV3/gram/main/SecurityLoader.lua"))()
 
 if not SecurityLoader then
     LoadingNotification.Complete(false, 0, 1)
@@ -1707,7 +1699,7 @@ end
 -- ============================================
 -- CONFIG SYSTEM
 -- ============================================
-local ConfigSystem = loadstring(game:HttpGet("https://raw.githubusercontent.com/mriya23/Fish-It/main/SecurityLoader.lua"))()
+local ConfigSystem = loadstring(game:HttpGet("https://raw.githubusercontent.com/NYXOXOV3/gram/main/SecurityLoader.lua"))()
 
 -- Inject Local Config Management (Fixes Persistence)
 if ConfigSystem then
@@ -3900,10 +3892,10 @@ new("UICorner", {Parent = linkButton, CornerRadius = UDim.new(0, 8)})
 
 ConnectionManager:Add(linkButton.MouseButton1Click:Connect(function()
     pcall(function()
-        setclipboard("https://discord.gg/tshTkdDx")
+        setclipboard("https://discord.gg/")
         linkButton.Text = "✅ Copied to Clipboard!"
         task.wait(2)
-        linkButton.Text = "🔗 discord.gg/tshTkdDx  (Click to Copy)"
+        linkButton.Text = "🔗 discord.gg/  (Click to Copy)"
     end)
 end))
 
