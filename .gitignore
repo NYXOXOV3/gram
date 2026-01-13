@@ -1,0 +1,6 @@
+[key-system]
+# Project-specific ignore file for key-system branch
+/JackHub-KeySystem/node_modules
+/JackHub-KeySystem/.next
+/JackHub-KeySystem/.env*
+!/JackHub-KeySystem/.env.example
