@@ -20,12 +20,6 @@ AutoQuestModule.Locations = {
     Element = {
         ["Ancient Jungle"] = Vector3.new(1467.8480224609375, 7.447117328643799, -327.5971984863281),
         ["Sacred Temple"] = Vector3.new(1476.30810546875, -21.8499755859375, -630.8220825195312),
-    },
-    
-    -- ✨ NEW: Diamond Quest locations
-    Diamond = {
-        ["Coral Reefs"] = Vector3.new(2500, 50, -1800),  -- Placeholder - update with actual coordinates
-        ["Tropical Grove"] = Vector3.new(-2200, 60, 2100),  -- Placeholder - update with actual coordinates
     }
 }
 
@@ -64,81 +58,6 @@ AutoQuestModule.Quests = {
             {Name = "Catch 1 SECRET fish at Ancient Jungle", Current = 0, Required = 1, Location = "Ancient Jungle"},
             {Name = "Catch 1 SECRET fish at Sacred Temple", Current = 0, Required = 1, Location = "Sacred Temple"},
             {Name = "Create 3 Transcended Stones", Current = 0, Required = 3}
-        }
-    },
-    
-    -- ✨ NEW: Diamond Quest (from decompiled game data)
-    DiamondQuest = {
-        Name = "Diamond Quest",
-        Description = "Help Lary the Scientist complete his research to receive the Diamond Rod",
-        Reward = "Diamond Key",
-        FinalReward = "Diamond Rod",
-        Completed = false,
-        AssociatedTier = 7,
-        LocationSet = "Diamond",
-        Locations = {"Coral Reefs", "Tropical Grove"},
-        Tasks = {
-            -- Task 1: Own Element Rod (auto-check)
-            {
-                Id = 1,
-                Name = "Own an Element Rod",
-                Current = 0,
-                Required = 1,
-                Type = "ElementRodOwner",
-                Reconcile = true  -- Auto-check on load
-            },
-            -- Task 2: SECRET fish at Coral Reefs
-            {
-                Id = 2,
-                Name = "Catch a SECRET fish at Coral Reefs",
-                Current = 0,
-                Required = 1,
-                Type = "Catch",
-                Location = "Coral Reefs",
-                FishTier = 7  -- SECRET tier
-            },
-            -- Task 3: SECRET fish at Tropical Grove
-            {
-                Id = 3,
-                Name = "Catch a SECRET fish at Tropical Grove",
-                Current = 0,
-                Required = 1,
-                Type = "Catch",
-                Location = "Tropical Grove",
-                FishTier = 7
-            },
-            -- Task 4: Exchange Gemstone Ruby (mutated)
-            {
-                Id = 4,
-                Name = "Bring Lary a mutated Gemstone Ruby",
-                Current = 0,
-                Required = 1,
-                Type = "Exchange",
-                ItemId = 243,
-                VariantId = 3,  -- Mutated variant
-                AssociatedItem = "Ruby",
-                AssociatedType = "Fish"
-            },
-            -- Task 5: Exchange Lochness Monster
-            {
-                Id = 5,
-                Name = "Bring Lary a Lochness Monster",
-                Current = 0,
-                Required = 1,
-                Type = "Exchange",
-                ItemId = 228,
-                AssociatedItem = "Lochness Monster",
-                AssociatedType = "Fish"
-            },
-            -- Task 6: PERFECT throw fishing
-            {
-                Id = 6,
-                Name = "Catch 1,000 fish while using PERFECT! throw",
-                Current = 0,
-                Required = 1000,
-                Type = "Catch",
-                EffectIndex = 5  -- PERFECT throw effect
-            }
         }
     }
 }
@@ -279,21 +198,6 @@ function AutoQuestModule.DetectQuestCompletion()
             for i, task in ipairs(AutoQuestModule.Quests.DeepSeaQuest.Tasks) do
                 task.Current = task.Required
             end
-            
-            -- ✨ Unlock Diamond Quest requirement
-            AutoQuestModule.Quests.DiamondQuest.Tasks[1].Current = 1
-        end
-        
-        -- ✨ NEW: Diamond Rod detection
-        if currentRod:find("Diamond") then
-            AutoQuestModule.Quests.DiamondQuest.Completed = true
-            for i, task in ipairs(AutoQuestModule.Quests.DiamondQuest.Tasks) do
-                task.Current = task.Required
-            end
-            
-            -- Mark previous quests as complete
-            AutoQuestModule.Quests.ElementQuest.Completed = true
-            AutoQuestModule.Quests.DeepSeaQuest.Completed = true
         end
     end
     
