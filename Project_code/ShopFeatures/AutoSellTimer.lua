@@ -18,7 +18,7 @@ end
 
 function AutoSellTimer.Start(interval)
 	if AutoSellTimer.Enabled then
-		-- warn("⚠️ AutoSellTimer sudah aktif!")
+		warn("⚠️ AutoSellTimer sudah aktif!")
 		return
 	end
 
@@ -28,19 +28,19 @@ function AutoSellTimer.Start(interval)
 
 	local AutoSell = _G.AutoSell
 	if not AutoSell then
-		-- warn("❌ Modul AutoSell belum dimuat!")
+		warn("❌ Modul AutoSell belum dimuat!")
 		return
 	end
 
 	AutoSellTimer.Enabled = true
-	-- print("✅ AutoSellTimer dimulai (" .. AutoSellTimer.Interval .. " detik)")
+	print("✅ AutoSellTimer dimulai (" .. AutoSellTimer.Interval .. " detik)")
 	Notify("Auto Sell Running", "Auto Sell Berjalan!", 4)
 
 	AutoSellTimer.Thread = task.spawn(function()
 		while AutoSellTimer.Enabled do
 			task.wait(AutoSellTimer.Interval)
 			if AutoSellTimer.Enabled and AutoSell and AutoSell.SellOnce then
-				-- print("💸 Auto selling (interval " .. AutoSellTimer.Interval .. "s)")
+				print("💸 Auto selling (interval " .. AutoSellTimer.Interval .. "s)")
 				pcall(AutoSell.SellOnce)
 			end
 		end
@@ -49,28 +49,28 @@ end
 
 function AutoSellTimer.Stop()
 	if not AutoSellTimer.Enabled then
-		-- warn("⚠️ AutoSellTimer belum aktif.")
+		warn("⚠️ AutoSellTimer belum aktif.")
 		return
 	end
 
 	AutoSellTimer.Enabled = false
-	-- print("🛑 AutoSellTimer dihentikan.")
+	print("🛑 AutoSellTimer dihentikan.")
 	Notify("Auto Sell Stopped", "Auto Sell Berhenti!", 4)
 end
 
 function AutoSellTimer.SetInterval(seconds)
 	if tonumber(seconds) and seconds >= 1 then
 		AutoSellTimer.Interval = tonumber(seconds)
-		-- print("⏰ Interval auto sell diatur ke " .. seconds .. " detik.")
+		print("⏰ Interval auto sell diatur ke " .. seconds .. " detik.")
 	else
-		-- warn("❌ Interval tidak valid, harus >= 1 detik.")
+		warn("❌ Interval tidak valid, harus >= 1 detik.")
 	end
 end
 
 function AutoSellTimer.GetStatus()
-	-- print("\n📊 AUTO SELL TIMER STATUS:")
-	-- print("✅ Enabled:", AutoSellTimer.Enabled)
-	-- print("⏰ Interval:", AutoSellTimer.Interval .. " detik")
+	print("\n📊 AUTO SELL TIMER STATUS:")
+	print("✅ Enabled:", AutoSellTimer.Enabled)
+	print("⏰ Interval:", AutoSellTimer.Interval .. " detik")
 end
 
 return AutoSellTimer
