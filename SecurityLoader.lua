@@ -216,7 +216,7 @@ function SecurityLoader.EnableAntiDump()
             
             if method == "HttpGet" or method == "GetObjects" then
                 local caller = getcallingscript and getcallingscript()
-                if caller and caller ~= script then
+                 if caller and not tostring(caller):find("SecurityLoader") then
                     warn("🚫 Blocked unauthorized HTTP request")
                     return ""
                 end
