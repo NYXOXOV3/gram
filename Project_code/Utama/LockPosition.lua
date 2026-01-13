@@ -31,7 +31,7 @@ function LockPosition.Start()
         hrp2.CFrame = LockPosition.LockedPos
     end)
 
-    -- print("Lock Position: Activated")
+    print("Lock Position: Activated")
 end
 
 -- Nonaktifkan Lock Position
@@ -43,7 +43,7 @@ function LockPosition.Stop()
         LockPosition.Connection = nil
     end
 
-    -- print("Lock Position: Deactivated")
+    print("Lock Position: Deactivated")
 end
 
 return LockPosition
