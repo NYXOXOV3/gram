@@ -5,27 +5,9 @@
 repeat task.wait() until game:IsLoaded()
 
 -- ============================================
--- UNIVERSAL GUI LOCK (Prevents ALL duplicate GUIs)
--- ============================================
--- Check if ANY GUI is already running
-if getgenv then
-    if getgenv().LYNX_GUI_RUNNING then
-        warn("⚠️ LYNX GUI is already running! Terminating this instance...")
-        return
-    end
-    getgenv().LYNX_GUI_RUNNING = true
-elseif _G then
-    if _G.LYNX_GUI_RUNNING then
-        warn("⚠️ LYNX GUI is already running! Terminating this instance...")
-        return
-    end
-    _G.LYNX_GUI_RUNNING = true
-end
-
--- ============================================
 -- ANTI-DUPLICATION
 -- ============================================
-local GUI_IDENTIFIER = "JackHubGUI v1"
+local GUI_IDENTIFIER = "JackHubGUI_Galaxy_v2.3"
 local INSTANCE_ID = tick() -- Unique ID for this script instance
 
 -- Store this instance as the active one
@@ -40,41 +22,29 @@ local function CloseExistingGUI()
     
     -- Remove ALL instances with matching name (prevents duplicates from fast re-execution)
     for _, child in ipairs(playerGui:GetChildren()) do
-        if child:IsA("ScreenGui") and (
-            string.find(child.Name, "Jack") or 
-            string.find(child.Name, "Lynx") or 
-            string.find(child.Name, "Floating") or
-            child.Name == GUI_IDENTIFIER or
-            child.Name == "LynxGUI_Galaxy" or
-            child.Name == "JackHubFloatingButtonGui"
-        ) then
+        if child:IsA("ScreenGui") and (string.find(child.Name, "JackHub") or child.Name == GUI_IDENTIFIER) then
             pcall(function() child:Destroy() end)
         end
     end
     
     -- AGGRESSIVE: Find and destroy ANY floating button anywhere in PlayerGui
     for _, descendant in ipairs(playerGui:GetDescendants()) do
-        if descendant.Name == "JackHubFloatingButton" or 
-           string.find(tostring(descendant.Name):lower(), "floating") then 
+        if descendant.Name == "JackHubFloatingButton" then 
             pcall(function() descendant:Destroy() end)
         end
     end
     
     -- Also check for orphaned floating buttons at PlayerGui level
     for _, child in ipairs(playerGui:GetChildren()) do
-        if child.Name == "JackHubFloatingButton" or
-           (child:IsA("ImageLabel") and child.ZIndex >= 100) then 
+        if child.Name == "JackHubFloatingButton" then 
             pcall(function() child:Destroy() end)
         end
     end
     
-    task.wait(0.15) -- Brief wait to ensure cleanup
+    task.wait(0.1) -- Brief wait to ensure cleanup
 end
 
 CloseExistingGUI()
-
--- Show loading message in console
-print("⏳ Loading JHub script...")
 
 -- ============================================
 -- SERVICES (Cached once)
@@ -182,7 +152,7 @@ local function SendNotification(title, text, duration)
             Title = title,
             Text = text,
             Duration = duration or 5,
-            Icon = "rbxthumb://type=Asset&id=91891350821146&w=420&h=420"
+            Icon = "rbxthumb://type=Asset&id=87557537572594&w=420&h=420"
         })
     end)
 end
@@ -217,7 +187,7 @@ function LoadingNotification.Create()
             Size = UDim2.new(0, 340, 0, 100),
             Position = UDim2.new(0.5, -170, 0.5, -50),
             BackgroundColor3 = Color3.fromRGB(0, 0, 0),
-            BackgroundTransparency = 0,
+            BackgroundTransparency = 0.15,
             BorderSizePixel = 0
         })
         new("UICorner", {Parent = notifFrame, CornerRadius = UDim.new(0, 16)})
@@ -227,7 +197,7 @@ function LoadingNotification.Create()
             Size = UDim2.new(0, 45, 0, 45),
             Position = UDim2.new(0, 18, 0, 12),
             BackgroundTransparency = 1,
-            Image = "rbxthumb://type=Asset&id=91891350821146&w=420&h=420",
+            Image = "rbxthumb://type=Asset&id=87557537572594&w=420&h=420",
             ScaleType = Enum.ScaleType.Fit,
             ZIndex = 3
         })
@@ -322,8 +292,8 @@ function LoadingNotification.Complete(success, loadedCount, totalCount)
         
         if LoadingNotification.StatusLabel then
             LoadingNotification.StatusLabel.Text = success 
-                and "✓ All systems ready"
-                or "⚠ Loading complete"
+                and string.format("✓ %d modules loaded", loadedCount)
+                or string.format("⚠ Loaded %d/%d", loadedCount, totalCount)
         end
         
         if LoadingNotification.ProgressBar then
@@ -371,7 +341,7 @@ local CRITICAL_MODULES = {"HideStats", "Webhook", "Notify"}
 LoadingNotification.Create()
 
 -- Load SecurityLoader
-local SecurityLoader = loadstring(game:HttpGet("https://raw.githubusercontent.com/NYXOXOV3/gram/main/SecurityLoader.lua"))()
+local SecurityLoader = loadstring(game:HttpGet("https://raw.githubusercontent.com/mriya23/Fish-It/main/SecurityLoader.lua"))()
 
 if not SecurityLoader then
     LoadingNotification.Complete(false, 0, 1)
@@ -478,28 +448,28 @@ local function GetModule(name)
 end
 
 -- ============================================
--- COLOR PALETTE - Navy Blue Theme (Biru Dongker)
+-- COLOR PALETTE
 -- ============================================
 local colors = {
-    -- Accents (Lighter Blue / Cyan for contrast)
-    primary = Color3.fromRGB(56, 189, 248),      -- Sky Blue
-    secondary = Color3.fromRGB(14, 165, 233),    -- Deep Sky Blue
+    primary = Color3.fromRGB(56, 189, 248), -- Sky Blue
+    secondary = Color3.fromRGB(30, 41, 59), -- Slate 800
     
-    -- Status colors
-    success = Color3.fromRGB(34, 197, 94),       -- Green
-    warning = Color3.fromRGB(245, 158, 11),      -- Amber
-    danger = Color3.fromRGB(239, 68, 68),        -- Red
+    success = Color3.fromRGB(34, 197, 94),
+    warning = Color3.fromRGB(245, 158, 11),
+    danger = Color3.fromRGB(239, 68, 68), -- Soft Red
     
-    -- Solid Navy Blue backgrounds (Biru Dongker)
-    bg1 = Color3.fromRGB(10, 13, 26),            -- Darkest Navy (Window)
-    bg2 = Color3.fromRGB(17, 24, 39),            -- Dark Navy (Cards)
-    bg3 = Color3.fromRGB(30, 41, 59),            -- Navy (Buttons)
-    bg4 = Color3.fromRGB(51, 65, 85),            -- Light Navy (Hover)
-    accent = Color3.fromRGB(56, 189, 248),       -- Blue accent
+    bg1 = Color3.fromRGB(15, 23, 42), -- Darkest Navy (Win BG)
+    bg2 = Color3.fromRGB(30, 41, 59), -- Lighter Navy (Sections/Detail)
+    bg3 = Color3.fromRGB(51, 65, 85), -- Borders
+    bg4 = Color3.fromRGB(71, 85, 105), -- Hover Light
+    accent = Color3.fromRGB(14, 165, 233),
     
-    -- Text colors
-    text = Color3.fromRGB(255, 255, 255),        -- White
-    textDim = Color3.fromRGB(148, 163, 184)      -- Blueish Gray
+    text = Color3.fromRGB(241, 245, 249),
+    textDim = Color3.fromRGB(148, 163, 184),
+    textDimmer = Color3.fromRGB(100, 116, 139),
+    
+    border = Color3.fromRGB(51, 65, 85),
+    shadow = Color3.fromRGB(0, 0, 0)
 }
 
 -- ============================================
@@ -536,13 +506,13 @@ local win = new("Frame", {
     Size = windowSize,
     Position = UDim2.new(0.5, -windowSize.X.Offset/2, 0.5, -windowSize.Y.Offset/2),
     BackgroundColor3 = colors.bg1,
-    BackgroundTransparency = 0,
+    BackgroundTransparency = 0.05,
     BorderSizePixel = 0,
     ClipsDescendants = false,
     ZIndex = 3
 })
 new("UICorner", {Parent = win, CornerRadius = UDim.new(0, 16)})
-new("UIStroke", {Parent = win, Color = colors.primary, Thickness = 1, Transparency = 0.7, ApplyStrokeMode = Enum.ApplyStrokeMode.Border})
+new("UIStroke", {Parent = win, Color = colors.bg3, Thickness = 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border})
 
 -- Header
 local scriptHeader = new("Frame", {
@@ -554,25 +524,15 @@ local scriptHeader = new("Frame", {
 
 local appTitle = new("TextLabel", {
     Parent = scriptHeader,
-    Text = "JHub",
+    Text = "JackHub",
     Font = Enum.Font.GothamBlack,
-    TextSize = 22,
+    TextSize = 20,
     TextColor3 = colors.text,
     Size = UDim2.new(0, 200, 1, 0),
     Position = UDim2.new(0, 16, 0, 0),
     BackgroundTransparency = 1,
     TextXAlignment = Enum.TextXAlignment.Left,
     ZIndex = 6
-})
-
--- Add gradient to title
-local titleGradient = new("UIGradient", {
-    Parent = appTitle,
-    Color = ColorSequence.new{
-        ColorSequenceKeypoint.new(0, colors.primary),
-        ColorSequenceKeypoint.new(1, colors.secondary)
-    },
-    Rotation = 45
 })
 
 
@@ -591,7 +551,7 @@ local btnMinHeader = new("TextButton", {
     Parent = headerBtns,
     Size = UDim2.new(0, 32, 0, 32),
     BackgroundColor3 = colors.bg3,
-    BackgroundTransparency = 0,
+    BackgroundTransparency = 0.5,
     Text = "—",
     Font=Enum.Font.GothamBold,
     TextColor3=colors.textDim,
@@ -604,7 +564,7 @@ local btnCloseHeader = new("TextButton", {
     Parent = headerBtns,
     Size = UDim2.new(0, 32, 0, 32),
     BackgroundColor3 = colors.danger,
-    BackgroundTransparency = 0,
+    BackgroundTransparency = 0.2,
     Text = "×",
     Font = Enum.Font.GothamBold,
     TextSize = 18,
@@ -662,19 +622,69 @@ local originalSize = windowSize -- Store ONCE, never changes
 local isToggling = false -- Debounce
 local UserInputService = game:GetService("UserInputService")
 
--- ToggleMinimize Function (Restored)
+-- Clean up ANY existing floating buttons in PlayerGui (prevent duplicates)
+local pGui = localPlayer:WaitForChild("PlayerGui")
+for _, child in ipairs(pGui:GetChildren()) do
+    if child.Name == "JackHubFloatingButtonGui" then
+        child:Destroy()
+    end
+end
+
+-- Create SEPARATE ScreenGui for floating button (survives independently)
+local floatingGui = new("ScreenGui", {
+    Name = "JackHubFloatingButtonGui",
+    Parent = pGui,
+    ResetOnSpawn = false,
+    ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+    DisplayOrder = 2147483647
+})
+
+-- Create Floating Restore Button (Hidden by default)
+local restoreBtn = new("ImageButton", {
+    Name = "JackHubFloatingButton", 
+    Parent = floatingGui, -- Now in SEPARATE gui
+    Size = UDim2.new(0, 50, 0, 50),
+    Position = UDim2.new(0, 30, 0.5, -25), 
+    BackgroundColor3 = colors.bg2,
+    BackgroundTransparency = 0.2,
+    BorderSizePixel = 0,
+    Image = "rbxthumb://type=Asset&id=87557537572594&w=420&h=420", 
+    Visible = false, -- Default to Hidden
+    AutoButtonColor = false,
+    ZIndex = 200 
+})
+
+-- Heartbeat to sync visibility
+local hb = game:GetService("RunService").Heartbeat:Connect(function()
+    if not win or not win.Parent then 
+        if restoreBtn then restoreBtn.Visible = true end -- Show button if main window is gone
+        return 
+    end
+    if restoreBtn then
+        restoreBtn.Visible = not win.Visible
+    end
+end)
+ConnectionManager:Add(hb)
+new("UICorner", {Parent = restoreBtn, CornerRadius = UDim.new(0, 12)})
+new("UIStroke", {Parent = restoreBtn, Color = colors.primary, Thickness = 2, Transparency = 0.5})
+
 local function ToggleMinimize()
     -- SAFETY: If this script's GUI is dead, don't run
     if not gui or not gui.Parent then return end
+    if not floatingGui or not floatingGui.Parent then return end
+    if not restoreBtn then return end
+    
     if isToggling then return end -- Debounce: prevent spam
     isToggling = true
     
     if win.Visible then
-        -- Minimize: Hide Window
+        -- Minimize: Hide Window, Show Button
         win.Visible = false
+        restoreBtn.Visible = true
         isMinimized = true
     else
-        -- Restore: Show Window
+        -- Restore: Show Window, Hide Button
+        restoreBtn.Visible = false
         win.Visible = true
         win.Size = UDim2.new(0, 0, 0, 0)
         TweenService:Create(win, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Size = originalSize}):Play()
@@ -684,57 +694,16 @@ local function ToggleMinimize()
     task.delay(0.35, function() isToggling = false end)
 end
 
--- Clean up ANY existing floating buttons in PlayerGui (prevent duplicates)
-local pGui = localPlayer:WaitForChild("PlayerGui")
-for _, child in ipairs(pGui:GetChildren()) do
-    -- Use partial match to catch both old (exact name) and new (with ID suffix) formats
-    if string.find(child.Name, "JackHubFloatingButtonGui") then
-        -- print("[JackHub DEBUG] Destroying old floating button: " .. child.Name)
-        child:Destroy()
-    end
-end
-
--- Create Floating Button in separate ScreenGui (prevents deletion when main gui hides)
-local floatingGui = new("ScreenGui", {
-    Name = "JackHubFloatingButtonGui",
-    Parent = pGui,
-    ResetOnSpawn = false,
-    DisplayOrder = 2147483646,
-    ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-})
-
-local restoreBtn = new("ImageButton", {
-    Name = "JackHubFloatingButton",
-    Parent = floatingGui,
-    Size = UDim2.new(0, 50, 0, 50),
-    Position = UDim2.new(0, 30, 0.5, -25),
-    BackgroundColor3 = Color3.fromRGB(0, 0, 0), -- Pure black background
-    BackgroundTransparency = 0,
-    BorderSizePixel = 0,
-    Image = "rbxthumb://type=Asset&id=91891350821146&w=420&h=420",
-    Visible = false,
-    AutoButtonColor = false,
-    ZIndex = 200
-})
-
-new("UICorner", {Parent = restoreBtn, CornerRadius = UDim.new(0, 12)})
-
--- Visibility Sync: Button visible when window hidden
-local hbConnection = game:GetService("RunService").Heartbeat:Connect(function()
-    if not win or not win.Parent or not restoreBtn or not restoreBtn.Parent then return end
-    restoreBtn.Visible = not win.Visible
-end)
-ConnectionManager:Add(hbConnection)
-
--- Click to restore
 ConnectionManager:Add(restoreBtn.MouseButton1Click:Connect(ToggleMinimize))
-
--- Keyboard shortcut (RightControl)
-ConnectionManager:Add(UserInputService.InputBegan:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.RightControl then ToggleMinimize() end
+ConnectionManager:Add(btnMinHeader.MouseButton1Click:Connect(ToggleMinimize))
+ConnectionManager:Add(UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end -- Don't trigger if typing in chat etc
+    if input.KeyCode == Enum.KeyCode.RightControl then
+        ToggleMinimize()
+    end
 end))
 
--- Draggable floating button
+-- Draggable Restore Button
 local draggingRestore, dragInputRestore, dragStartRestore, startPosRestore
 ConnectionManager:Add(restoreBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -763,19 +732,17 @@ local function createPage(name)
     local page = new("ScrollingFrame", {
         Parent = contentBg,
         Size = UDim2.new(1, 0, 1, 0),
-        BackgroundColor3 = colors.bg1,
-        BackgroundTransparency = 0,
+        BackgroundTransparency = 1,
         ScrollBarThickness = 3,
         ScrollBarImageColor3 = colors.primary,
         CanvasSize = UDim2.new(0,0,0,0),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
         Visible = false,
         ClipsDescendants = false,
-        BorderSizePixel = 0,
         ZIndex = 5
     })
     new("UIListLayout", {Parent = page, Padding = UDim.new(0, 12), SortOrder = Enum.SortOrder.LayoutOrder})
-    new("UIPadding", {Parent = page, PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8), PaddingRight = UDim.new(0, 4)})
+    new("UIPadding", {Parent = page, PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8)})
     pages[name] = page
     return page
 end
@@ -792,9 +759,9 @@ mainPage.Visible = true
 -- Welcome Card (Dashboard)
 local welcomeCard = new("Frame", {
     Parent = mainPage,
-    Size = UDim2.new(1, -12, 0, 80), -- Reduced width to accommodate scrollbar
+    Size = UDim2.new(1, 0, 0, 80),
     BackgroundColor3 = colors.bg2,
-    BackgroundTransparency = 0, -- Ensure solid
+    BackgroundTransparency = 0.5,
     BorderSizePixel = 0,
     LayoutOrder = -1 
 })
@@ -910,7 +877,7 @@ local function createNavButton(text, icon, page, order)
 
     ConnectionManager:Add(btn.MouseEnter:Connect(function()
         if page ~= currentPage then
-            TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3=colors.bg3, BackgroundTransparency=0}):Play()
+            TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency=0.8}):Play()
         end
     end))
     ConnectionManager:Add(btn.MouseLeave:Connect(function()
@@ -948,14 +915,14 @@ local function makeCategory(parent, title, icon)
     local categoryFrame = new("Frame", {
         Parent = parent,
         Size = UDim2.new(1, 0, 0, 36),
-        BackgroundColor3 = colors.bg2,
-        BackgroundTransparency = 0,
+        BackgroundColor3 = colors.bg3,
+        BackgroundTransparency = 0.6,
         BorderSizePixel = 0,
         AutomaticSize = Enum.AutomaticSize.Y,
         ClipsDescendants = false,
         ZIndex = 6
     })
-    new("UICorner", {Parent = categoryFrame, CornerRadius = UDim.new(0, 8)})
+    new("UICorner", {Parent = categoryFrame, CornerRadius = UDim.new(0, 6)})
     
     local header = new("TextButton", {
         Parent = categoryFrame,
@@ -1175,11 +1142,11 @@ local function makeButton(parent, label, callback)
         Parent = parent,
         Size = UDim2.new(1, 0, 0, 32),
         BackgroundColor3 = colors.primary,
-        BackgroundTransparency = 0,
+        BackgroundTransparency = 0.3,
         BorderSizePixel = 0,
         ZIndex = 8
     })
-    new("UICorner", {Parent = btnFrame, CornerRadius = UDim.new(0, 8)})
+    new("UICorner", {Parent = btnFrame, CornerRadius = UDim.new(0, 6)})
     
     local button = new("TextButton", {
         Parent = btnFrame,
@@ -1215,14 +1182,14 @@ local function makeDropdown(parent, title, icon, items, onSelect, uniqueId, defa
     local dropdownFrame = new("Frame", {
         Parent = parent,
         Size = UDim2.new(1, 0, 0, 40),
-        BackgroundColor3 = colors.bg3,
-        BackgroundTransparency = 0,
+        BackgroundColor3 = colors.bg4,
+        BackgroundTransparency = 0.5,
         BorderSizePixel = 0,
         AutomaticSize = Enum.AutomaticSize.Y,
         ZIndex = 7,
         Name = uniqueId or "Dropdown"
     })
-    new("UICorner", {Parent = dropdownFrame, CornerRadius = UDim.new(0, 8)})
+    new("UICorner", {Parent = dropdownFrame, CornerRadius = UDim.new(0, 6)})
     
     local header = new("TextButton", {
         Parent = dropdownFrame,
@@ -1324,14 +1291,14 @@ local function makeDropdown(parent, title, icon, items, onSelect, uniqueId, defa
         local itemBtn = new("TextButton", {
             Parent = listContainer,
             Size = UDim2.new(1, 0, 0, 26),
-            BackgroundColor3 = colors.bg3,
-            BackgroundTransparency = 0,
+            BackgroundColor3 = colors.bg4,
+            BackgroundTransparency = 0.6,
             BorderSizePixel = 0,
             Text = "",
             AutoButtonColor = false,
             ZIndex = 11
         })
-        new("UICorner", {Parent = itemBtn, CornerRadius = UDim.new(0, 6)})
+        new("UICorner", {Parent = itemBtn, CornerRadius = UDim.new(0, 5)})
         
         local btnLabel = new("TextLabel", {
             Parent = itemBtn,
@@ -1349,7 +1316,7 @@ local function makeDropdown(parent, title, icon, items, onSelect, uniqueId, defa
         
         ConnectionManager:Add(itemBtn.MouseEnter:Connect(function()
             if selectedItem ~= itemName then
-                local t1 = TweenService:Create(itemBtn, TweenInfo.new(0.2), {BackgroundColor3 = colors.bg4})
+                local t1 = TweenService:Create(itemBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.3})
                 local t2 = TweenService:Create(btnLabel, TweenInfo.new(0.2), {TextColor3 = colors.text})
                 ConnectionManager:AddTween(t1)
                 ConnectionManager:AddTween(t2)
@@ -1360,7 +1327,7 @@ local function makeDropdown(parent, title, icon, items, onSelect, uniqueId, defa
         
         ConnectionManager:Add(itemBtn.MouseLeave:Connect(function()
             if selectedItem ~= itemName then
-                local t1 = TweenService:Create(itemBtn, TweenInfo.new(0.2), {BackgroundColor3 = colors.bg3})
+                local t1 = TweenService:Create(itemBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.6})
                 local t2 = TweenService:Create(btnLabel, TweenInfo.new(0.2), {TextColor3 = colors.textDim})
                 ConnectionManager:AddTween(t1)
                 ConnectionManager:AddTween(t2)
@@ -1699,7 +1666,7 @@ end
 -- ============================================
 -- CONFIG SYSTEM
 -- ============================================
-local ConfigSystem = loadstring(game:HttpGet("https://raw.githubusercontent.com/NYXOXOV3/gram/main/SecurityLoader.lua"))()
+local ConfigSystem = loadstring(game:HttpGet("https://raw.githubusercontent.com/mriya23/Fish-It/main/SecurityLoader.lua"))()
 
 -- Inject Local Config Management (Fixes Persistence)
 if ConfigSystem then
@@ -2337,17 +2304,8 @@ end
 -- Player Teleport (Optimized with cleanup)
 local playerDropdown
 local playerUpdateTask = nil
-local isUpdatingPlayerList = false -- Debounce flag
 
 local function updatePlayerList()
-    -- Prevent concurrent calls
-    if isUpdatingPlayerList then 
-        -- print("⚠️ Player list update already in progress, skipping...")
-        return 
-    end
-    
-    isUpdatingPlayerList = true
-    
     local playerItems = {}
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= localPlayer then
@@ -2358,23 +2316,11 @@ local function updatePlayerList()
     
     if #playerItems == 0 then playerItems = {"No other players"} end
     
-    -- AGGRESSIVE: Destroy ALL existing PlayerTeleport dropdowns
-    if teleportPage then
-        for _, child in ipairs(teleportPage:GetChildren()) do
-            if child.Name == "PlayerTeleport" then
-                pcall(function() child:Destroy() end)
-                -- print("🗑️ Destroyed duplicate PlayerTeleport dropdown")
-            end
-        end
-    end
-    
-    -- Destroy old dropdown reference
+    -- Destroy old dropdown properly
     if playerDropdown and playerDropdown.Parent then 
         playerDropdown:Destroy() 
         playerDropdown = nil
     end
-    
-    task.wait(0.05) -- Brief wait for cleanup
     
     if TeleportToPlayer then
         playerDropdown = makeDropdown(teleportPage, "Teleport to Player", "👤", playerItems, function(selectedPlayer)
@@ -2383,8 +2329,6 @@ local function updatePlayerList()
             end
         end, "PlayerTeleport")
     end
-    
-    isUpdatingPlayerList = false -- Release lock
 end
 
 updatePlayerList()
@@ -2702,11 +2646,11 @@ if WebhookModule then
             ZIndex = 8
         })
         
-        -- print("❌ Webhook: Executor tidak support HTTP requests!")
+        print("❌ Webhook: Executor tidak support HTTP requests!")
     else
         -- Enable simple mode for security
         WebhookModule:SetSimpleMode(true)
-        -- print("✅ Webhook: Executor support detected!")
+        print("✅ Webhook: Executor support detected!")
     end
 end
 
@@ -3498,7 +3442,7 @@ local function RefreshConfigList()
             Size = UDim2.new(1, -8, 0, 30),
             BackgroundTransparency = 1,
             Text = "No saved configs yet",
-            Font = Enum.Font.Gotham, -- Fixed invalid font
+            Font = Enum.Font.GothamItalic,
             TextSize = 11,
             TextColor3 = colors.textDim,
             ZIndex = 8
@@ -3768,136 +3712,97 @@ end)
 -- ============================================
 -- INFO PAGE
 -- ============================================
-
--- Main Info Container (Single Column)
 local infoContainer = new("Frame", {
     Parent = infoPage,
-    Size = UDim2.new(1, 0, 0, 220),
+    Size = UDim2.new(1, 0, 0, 200),
     BackgroundColor3 = colors.bg3,
     BackgroundTransparency = 0.6,
     BorderSizePixel = 0,
     ZIndex = 6
 })
-new("UICorner", {Parent = infoContainer, CornerRadius = UDim.new(0, 12)})
+new("UICorner", {Parent = infoContainer, CornerRadius = UDim.new(0, 8)})
 
--- Logo
-local logoIcon = new("ImageLabel", {
-    Parent = infoContainer,
-    Size = UDim2.new(0, 60, 0, 60),
-    Position = UDim2.new(0, 15, 0, 15),
-    BackgroundColor3 = colors.bg2,
-    BackgroundTransparency = 0.3,
-    BorderSizePixel = 0,
-    Image = "rbxthumb://type=Asset&id=91891350821146&w=420&h=420",
-    ScaleType = Enum.ScaleType.Fit,
-    ZIndex = 7
-})
-new("UICorner", {Parent = logoIcon, CornerRadius = UDim.new(0, 12)})
-
--- Title
 new("TextLabel", {
     Parent = infoContainer,
-    Size = UDim2.new(1, -90, 0, 28),
-    Position = UDim2.new(0, 85, 0, 18),
+    Size = UDim2.new(1, -24, 0, 100),
+    Position = UDim2.new(0, 12, 0, 12),
     BackgroundTransparency = 1,
-    Text = "JHub V1",
-    Font = Enum.Font.GothamBold,
-    TextSize = 20,
-    TextColor3 = colors.primary,
-    TextXAlignment = Enum.TextXAlignment.Left,
-    ZIndex = 7
-})
-
--- Subtitle
-new("TextLabel", {
-    Parent = infoContainer,
-    Size = UDim2.new(1, -90, 0, 18),
-    Position = UDim2.new(0, 85, 0, 48),
-    BackgroundTransparency = 1,
-    Text = "Premium Fish It Script",
+    Text = "# JackHub v2.3.1 Optimized\nFree Not For Sale\n━━━━━━━━━━━━━━━━━━━━━━\nCreated by Beee\nRefined Edition 2024",
     Font = Enum.Font.Gotham,
     TextSize = 10,
-    TextColor3 = colors.textDim,
-    TextXAlignment = Enum.TextXAlignment.Left,
-    ZIndex = 7
-})
-
--- Separator Line
-new("Frame", {
-    Parent = infoContainer,
-    Size = UDim2.new(1, -30, 0, 1),
-    Position = UDim2.new(0, 15, 0, 85),
-    BackgroundColor3 = colors.primary,
-    BackgroundTransparency = 0.8,
-    BorderSizePixel = 0,
-    ZIndex = 7
-})
-
--- Features Title
-new("TextLabel", {
-    Parent = infoContainer,
-    Size = UDim2.new(1, -30, 0, 20),
-    Position = UDim2.new(0, 15, 0, 95),
-    BackgroundTransparency = 1,
-    Text = "⚡ KEY FEATURES",
-    Font = Enum.Font.GothamBold,
-    TextSize = 11,
-    TextColor3 = colors.primary,
-    TextXAlignment = Enum.TextXAlignment.Left,
-    ZIndex = 7
-})
-
--- Features List
-new("TextLabel", {
-    Parent = infoContainer,
-    Size = UDim2.new(1, -30, 0, 100),
-    Position = UDim2.new(0, 15, 0, 118),
-    BackgroundTransparency = 1,
-    Text = "• Ultra-Fast Auto Fishing (Multiple Modes)\n• Quest & Temple Automation\n• Smart Teleport System\n• Auto Sell & Merchant\n• Webhook Integration\n• Hide Stats & Anti-AFK\n• Memory Optimized (~30 MB)",
-    Font = Enum.Font.Gotham,
-    TextSize = 9,
     TextColor3 = colors.text,
     TextWrapped = true,
     TextXAlignment = Enum.TextXAlignment.Left,
     TextYAlignment = Enum.TextYAlignment.Top,
-    LineHeight = 1.2,
     ZIndex = 7
 })
 
--- Discord Section
-local discordContainer = new("Frame", {
+local linkButton = new("TextButton", {
+    Parent = infoContainer,
+    Size = UDim2.new(1, -24, 0, 25),
+    Position = UDim2.new(0, 12, 0, 115),
+    BackgroundTransparency = 1,
+    Text = "🔗 Discord: https://discord.gg/6Rpvm2gQ",
+    Font = Enum.Font.GothamBold,
+    TextSize = 10,
+    TextColor3 = Color3.fromRGB(88, 101, 242),
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 7
+})
+
+ConnectionManager:Add(linkButton.MouseButton1Click:Connect(function()
+    setclipboard("https://discord.gg/6Rpvm2gQ")
+    linkButton.Text = "✅ Link copied to clipboard!"
+    task.wait(2)
+    linkButton.Text = "🔗 Discord: https://discord.gg/6Rpvm2gQ"
+end))
+
+-- Module Status
+local moduleStatusContainer = new("Frame", {
     Parent = infoPage,
-    Size = UDim2.new(1, 0, 0, 60),
-    BackgroundColor3 = Color3.fromRGB(88, 101, 242),
-    BackgroundTransparency = 0.95,
+    Size = UDim2.new(1, 0, 0, 150),
+    BackgroundColor3 = colors.bg3,
+    BackgroundTransparency = 0.6,
     BorderSizePixel = 0,
     ZIndex = 6
 })
-new("UICorner", {Parent = discordContainer, CornerRadius = UDim.new(0, 12)})
+new("UICorner", {Parent = moduleStatusContainer, CornerRadius = UDim.new(0, 8)})
 
-local linkButton = new("TextButton", {
-    Parent = discordContainer,
-    Size = UDim2.new(1, -24, 0, 40),
-    Position = UDim2.new(0, 12, 0, 10),
-    BackgroundColor3 = Color3.fromRGB(88, 101, 242),
-    BackgroundTransparency = 0.85,
-    BorderSizePixel = 0,
-    Text = "🔗 discord.gg/tshTkdDx  (Click to Copy)",
-    Font = Enum.Font.GothamBold,
-    TextSize = 11,
-    TextColor3 = Color3.fromRGB(88, 101, 242),
+local moduleStatusText = new("TextLabel", {
+    Parent = moduleStatusContainer,
+    Size = UDim2.new(1, -24, 1, -24),
+    Position = UDim2.new(0, 12, 0, 12),
+    BackgroundTransparency = 1,
+    Text = "Loading module status...",
+    Font = Enum.Font.Gotham,
+    TextSize = 8,
+    TextColor3 = colors.text,
+    TextWrapped = true,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    TextYAlignment = Enum.TextYAlignment.Top,
     ZIndex = 7
 })
-new("UICorner", {Parent = linkButton, CornerRadius = UDim.new(0, 8)})
 
-ConnectionManager:Add(linkButton.MouseButton1Click:Connect(function()
+TrackedSpawn(function()
+    task.wait(0.5)
     pcall(function()
-        setclipboard("https://discord.gg/")
-        linkButton.Text = "✅ Copied to Clipboard!"
-        task.wait(2)
-        linkButton.Text = "🔗 discord.gg/  (Click to Copy)"
+        if moduleStatusText and moduleStatusText.Parent then
+            local statusText = "📦 MODULE STATUS (" .. loadedModules .. "/" .. totalModules .. " loaded)\n━━━━━━━━━━━━━━━━━━━━━━\n"
+            
+            local sortedModules = {}
+            for name, status in pairs(ModuleStatus) do
+                table.insert(sortedModules, {name = name, status = status})
+            end
+            table.sort(sortedModules, function(a, b) return a.name < b.name end)
+            
+            for _, moduleInfo in ipairs(sortedModules) do
+                statusText = statusText .. moduleInfo.status .. " " .. moduleInfo.name .. "\n"
+            end
+            
+            moduleStatusText.Text = statusText
+        end
     end)
-end))
+end)
 
 -- ============================================
 -- MINIMIZE SYSTEM WITH AUTO-SAVE
@@ -3907,36 +3812,16 @@ local icon
 local savedIconPos = UDim2.new(0, 20, 0, 100)
 
 local function createMinimizedIcon()
-    -- AGGRESSIVE: Destroy ALL existing minimize icons first
-    local pGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-    
-    -- Check if already exists
-    if icon and icon.Parent then 
-        -- print("⚠️ Minimize icon already exists, skipping...")
-        return 
-    end
-    
-    -- Destroy ALL floating icons in PlayerGui (prevent duplicates)
-    for _, child in ipairs(pGui:GetDescendants()) do
-        if child:IsA("ImageLabel") and child.ZIndex >= 100 then
-            if string.find(tostring(child.Image), "91891350821146") then
-                -- print("🗑️ Destroying duplicate minimize icon:", child:GetFullName())
-                pcall(function() child:Destroy() end)
-            end
-        end
-    end
-    
-    task.wait(0.1) -- Brief wait for cleanup
+    if icon then return end
     
     icon = new("ImageLabel", {
-        Name = "JackHubMinimizeIcon", -- Add unique name
         Parent = gui,
         Size = UDim2.new(0, 50, 0, 50),
         Position = savedIconPos,
         BackgroundColor3 = colors.bg2,
         BackgroundTransparency = 0.3,
         BorderSizePixel = 0,
-        Image = "rbxthumb://type=Asset&id=91891350821146&w=420&h=420",
+        Image = "rbxthumb://type=Asset&id=87557537572594&w=420&h=420",
         ScaleType = Enum.ScaleType.Fit,
         ZIndex = 100
     })
@@ -4001,46 +3886,71 @@ local function createMinimizedIcon()
     return saveIndicator
 end
 
--- ============================================
--- PERIODIC DUPLICATE CLEANUP (Anti-Bug System)
--- ============================================
-TrackedSpawn(function()
-    while task.wait(2) do -- Check every 2 seconds
-        pcall(function()
-            if not gui or not gui.Parent then return end
-            
-            local pGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-            local foundIcons = {}
-            
-            -- Find ALL minimize icons
-            for _, child in ipairs(pGui:GetDescendants()) do
-                if child:IsA("ImageLabel") and child.ZIndex >= 100 then
-                    if string.find(tostring(child.Image), "91891350821146") then
-                        table.insert(foundIcons, child)
-                    end
-                end
-            end
-            
-            -- If found more than 1, destroy extras
-            if #foundIcons > 1 then
-                warn(string.format("⚠️ Found %d duplicate minimize icons! Cleaning up...", #foundIcons))
+-- Enhanced minimize button handler with auto-save
+ConnectionManager:Add(btnMinHeader.MouseButton1Click:Connect(function()
+    if not minimized then
+        -- Check if there are unsaved changes
+        local hasUnsaved = false
+        if ConfigSystem then
+            pcall(function()
+                hasUnsaved = ConfigSystem.HasUnsavedChanges()
+            end)
+        end
+        
+        -- Show saving notification if there are changes
+        if hasUnsaved then
+            SendNotification("Minimizing...", "Saving config...", 2)
+        end
+        
+        -- Minimize animation
+        local tween = TweenService:Create(win, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+            Size = UDim2.new(0, 0, 0, 0),
+            Position = UDim2.new(0.5, 0, 0.5, 0)
+        })
+        ConnectionManager:AddTween(tween)
+        tween:Play()
+        
+        -- Save config while animating
+        TrackedSpawn(function()
+            if hasUnsaved and ConfigSystem then
+                local success, message = pcall(function()
+                    ConfigSystem.SaveSelective()
+                    ConfigSystem.MarkAsSaved()
+                    return true
+                end)
                 
-                -- Keep only the first one (or the one we own)
-                for i = 2, #foundIcons do
-                    pcall(function() 
-                        foundIcons[i]:Destroy()
-                        -- print("🗑️ Destroyed duplicate icon #" .. i)
-                    end)
+                if success then
+                    print("✅ [Minimize] Config saved successfully!")
+                else
+                    warn("❌ [Minimize] Failed to save config:", message)
                 end
             end
+            
+            task.wait(0.35)
+            win.Visible = false
+            
+            -- Create minimized icon with save indicator
+            local saveIndicator = createMinimizedIcon()
+            
+            -- Show save success indicator
+            if hasUnsaved and saveIndicator then
+                saveIndicator.Visible = true
+                task.wait(2)
+                if saveIndicator and saveIndicator.Parent then
+                    local fadeTween = TweenService:Create(saveIndicator, TweenInfo.new(0.5), {
+                        TextTransparency = 1,
+                        BackgroundTransparency = 1
+                    })
+                    ConnectionManager:AddTween(fadeTween)
+                    fadeTween:Play()
+                    task.wait(0.5)
+                    saveIndicator.Visible = false
+                end
+            end
+            
+            minimized = true
         end)
     end
-end)
-
-ConnectionManager:Add(btnMinHeader.MouseButton1Click:Connect(function()
-    -- Simple: Just call the unified ToggleMinimize function
-    -- Autosave is handled elsewhere if needed
-    ToggleMinimize()
 end))
 
 -- ============================================
@@ -4055,11 +3965,8 @@ ConnectionManager:Add(scriptHeader.InputBegan:Connect(function(input)
     end
 end))
 
-
--- Note: LeftAlt shortcut disabled. Only RightControl shortcut is active (defined at line ~733)
-
 ConnectionManager:Add(UserInputService.InputChanged:Connect(function(input)
-    if dragging and startPos and dragStart and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         local delta = input.Position - dragStart
         win.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
@@ -4084,7 +3991,6 @@ end))
 
 ConnectionManager:Add(UserInputService.InputChanged:Connect(function(input)
     if resizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        if not startSize or not resizeStart then resizing = false return end -- Guard clause
         local delta = input.Position - resizeStart
         local newWidth = math.clamp(startSize.X.Offset + delta.X, minWindowSize.X, maxWindowSize.X)
         local newHeight = math.clamp(startSize.Y.Offset + delta.Y, minWindowSize.Y, maxWindowSize.Y)
@@ -4113,7 +4019,7 @@ TrackedSpawn(function()
     })
     
     local tween2 = TweenService:Create(win, TweenInfo.new(0.5), {
-        BackgroundTransparency = 0
+        BackgroundTransparency = 0.25
     })
     
     ConnectionManager:AddTween(tween1)
@@ -4415,7 +4321,7 @@ end
 -- ============================================
 
 CleanupGUI = function()
-    -- print("🧹 Cleaning up JackHubGUI...")
+    print("🧹 Cleaning up JackHubGUI...")
     
     -- 1. Cancel all running tasks
     for i = #RunningTasks, 1, -1 do
@@ -4482,16 +4388,7 @@ CleanupGUI = function()
     -- 10. Clear global references
     _G.LynxGUI = nil
     
-    -- 11. Release universal GUI lock
-    if getgenv then
-        getgenv().LYNX_GUI_RUNNING = false
-        getgenv().JackHub_ActiveInstance = nil
-    elseif _G then
-        _G.LYNX_GUI_RUNNING = false
-        _G.JackHub_ActiveInstance = nil
-    end
-    
-    -- 12. Force garbage collection
+    -- 11. Force garbage collection
     for i = 1, 3 do
         pcall(function() collectgarbage("collect") end)
         task.wait(0.1)
@@ -4517,7 +4414,7 @@ if ENABLE_MEMORY_MONITOR then
             local stats = game:GetService("Stats")
             local memoryUsed = stats:GetTotalMemoryUsageMb()
             
-            -- print(string.format("📊 Memory Usage: %.2f MB", memoryUsed))
+            print(string.format("📊 Memory Usage: %.2f MB", memoryUsed))
             
             -- Warning if memory exceeds 500MB
             if memoryUsed > 500 then
@@ -4554,7 +4451,7 @@ TrackedSpawn(function()
     local lowEnd = isLowEndDevice()
     
     if lowEnd then
-        -- print("⚡ Low-end device detected, applying optimizations...")
+        print("⚡ Low-end device detected, applying optimizations...")
         
         -- Disable unnecessary visual effects
         pcall(function()
@@ -4574,9 +4471,9 @@ TrackedSpawn(function()
             end
         end
         
-        -- print("✅ Low-end optimizations applied!")
+        print("✅ Low-end optimizations applied!")
     else
-        -- print("✅ Standard performance mode!")
+        print("✅ Standard performance mode!")
     end
 end)
 
@@ -4612,32 +4509,35 @@ end
 -- ============================================
 
 -- Final success notification
-SendNotification("✨ JackHub GUI v2.3.1", "Script loaded successfully!", 5)
+SendNotification("✨ JackHub GUI v2.3.1", "Loaded! " .. loadedModules .. "/" .. totalModules .. " modules ready.", 5)
 
 -- Console output
--- Console output
--- print("✨ JackHubGUI v2.3.1 Performance Optimized")
--- print("📦 Modules: " .. loadedModules .. "/" .. totalModules)
+print("\n━━━━━━━━━━━━━━━━━━━━━━")
+print("✨ JackHubGUI v2.3.1 Performance Optimized")
+print("━━━━━━━━━━━━━━━━━━━━━━")
+print("📦 Modules: " .. loadedModules .. "/" .. totalModules)
 
--- local hideStatsOK = (HideStats ~= nil)
--- local webhookOK = (WebhookModule ~= nil)
--- local notifyOK = (GetModule("Notify") ~= nil)
+local hideStatsOK = (HideStats ~= nil)
+local webhookOK = (WebhookModule ~= nil)
+local notifyOK = (GetModule("Notify") ~= nil)
 
--- print("✅ HideStats: " .. (hideStatsOK and "OK" or "MISSING"))
--- print("✅ Webhook: " .. (webhookOK and "OK" or "MISSING"))
--- print("✅ Notify: " .. (notifyOK and "OK" or "MISSING"))
+print("✅ HideStats: " .. (hideStatsOK and "OK" or "MISSING"))
+print("✅ Webhook: " .. (webhookOK and "OK" or "MISSING"))
+print("✅ Notify: " .. (notifyOK and "OK" or "MISSING"))
 
--- if hideStatsOK and webhookOK and notifyOK then
---     print("🎉 All critical systems operational!")
--- else
---     print("⚠️  Some modules missing")
--- end
+if hideStatsOK and webhookOK and notifyOK then
+    print("🎉 All critical systems operational!")
+else
+    print("⚠️  Some modules missing")
+end
 
--- print("💾 Config System: " .. (ConfigSystem and "Active" or "Inactive"))
--- print("📱 Device: " .. (isMobile and "Mobile" or "Desktop"))
--- print("🔗 Connections Tracked: " .. #ConnectionManager.connections)
--- print("🎬 Tweens Tracked: " .. #ConnectionManager.tweens)
--- print("🎮 GUI Ready! Enjoy!\n")
+print("━━━━━━━━━━━━━━━━━━━━━━")
+print("💾 Config System: " .. (ConfigSystem and "Active" or "Inactive"))
+print("📱 Device: " .. (isMobile and "Mobile" or "Desktop"))
+print("🔗 Connections Tracked: " .. #ConnectionManager.connections)
+print("🎬 Tweens Tracked: " .. #ConnectionManager.tweens)
+print("━━━━━━━━━━━━━━━━━━━━━━")
+print("🎮 GUI Ready! Enjoy!\n")
 
 -- ============================================
 -- MEMORY LEAK PREVENTION SUMMARY
@@ -4844,7 +4744,7 @@ VERSION: v2.3.1 Performance Optimized
 RELEASE DATE: 2024
 ROBLOX GAME: Fisch
 CREATOR: Beee
-SUPPORT: https://discord.gg/tshTkdDx
+SUPPORT: https://discord.gg/6Rpvm2gQ
 
 MEMORY USAGE:
   ├─ Initial Load: ~25-35 MB
@@ -5031,7 +4931,7 @@ VERSION: 2.3.1 Performance Optimized
 LICENSE: Free - Not For Sale
 
 SUPPORT:
-  Discord: https://discord.gg/tshTkdDx
+  Discord: https://discord.gg/6Rpvm2gQ
   
 SPECIAL THANKS:
   - Module developers
@@ -5057,8 +4957,74 @@ Free to use, not for sale.
 -- SCRIPT INITIALIZATION COMPLETE
 -- ============================================
 
--- Success message after everything loads
-print("✅ JHub loaded successfully!")
+print([[
+╔═══════════════════════════════════════════════════════════════════════╗
+║                                                                       ║
+║                   ██╗  ██╗   ██╗███╗   ██╗██╗  ██╗                   ║
+║                   ██║  ╚██╗ ██╔╝████╗  ██║╚██╗██╔╝                   ║
+║                   ██║   ╚████╔╝ ██╔██╗ ██║ ╚███╔╝                    ║
+║                   ██║    ╚██╔╝  ██║╚██╗██║ ██╔██╗                    ║
+║                   ███████╗██║   ██║ ╚████║██╔╝ ██╗                   ║
+║                   ╚══════╝╚═╝   ╚═╝  ╚═══╝╚═╝  ╚═╝                   ║
+║                                                                       ║
+║                      v2.3.1 Performance Optimized                     ║
+║                          Memory Leak Fixed                            ║
+║                                                                       ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+✨ GUI Successfully Loaded!
+📦 Modules Loaded: ]] .. loadedModules .. [[/]] .. totalModules .. [[
+
+🔧 Features:
+   ✓ Auto Fishing (Fast & Perfect)
+   ✓ Blatant Modes (4 variants)
+   ✓ Support Features (10+ tools)
+   ✓ Teleport System (Location/Player/Event)
+   ✓ Shop Features (Auto Sell/Buy)
+   ✓ Webhook Integration (Discord)
+   ✓ Camera View (Zoom/Freecam)
+   ✓ Performance Tools (FPS Boost)
+   ✓ Config System (Auto-save)
+
+💾 Memory Optimized:
+   ✓ Connection Management
+   ✓ Tween Cleanup
+   ✓ Module Lifecycle
+   ✓ Table Cleanup
+   ✓ No Memory Leaks
+
+📱 Device Support:
+   ✓ Desktop (Windows/Mac)
+   ✓ Mobile (iOS/Android)
+   ✓ Low-End Devices
+
+🎮 Ready to Use!
+   • Drag header to move
+   • Resize from corner
+   • Minimize to icon
+   • Settings auto-save
+
+💬 Support: https://discord.gg/6Rpvm2gQ
+🎉 Enjoy!
+]])
+
+-- ============================================
+-- FINAL MEMORY USAGE REPORT
+-- ============================================
+TrackedSpawn(function()
+    task.wait(3)
+    
+    local stats = game:GetService("Stats")
+    local memoryUsed = stats:GetTotalMemoryUsageMb()
+    
+    print("\n📊 Final Memory Report:")
+    print("   Memory Usage: " .. string.format("%.2f", memoryUsed) .. " MB")
+    print("   Connections: " .. #ConnectionManager.connections)
+    print("   Tweens: " .. #ConnectionManager.tweens)
+    print("   Modules: " .. loadedModules .. "/" .. totalModules)
+    print("   Status: ✅ All systems operational!")
+    print("\n✨ LynxGUI v2.3.1 - Ready!\n")
+end)
 
 -- ============================================
 -- KEEP GUI ALIVE
@@ -5072,7 +5038,6 @@ print("✅ JHub loaded successfully!")
 -- FORCE SYNC UI STATE (Bug Fix)
 -- ============================================
 -- Ensure floating button is HIDDEN if window is OPEN
---[[ OLD FLOATING BUTTON SYNC (DISABLED)
 if win and restoreBtn then
     if win.Visible then
         restoreBtn.Visible = false
@@ -5080,7 +5045,6 @@ if win and restoreBtn then
         restoreBtn.Visible = true
     end
 end
---]]
 
 return LynxGUI
 
