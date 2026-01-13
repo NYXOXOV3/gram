@@ -2,28 +2,7 @@
 -- Core Setup, Services, Advanced Loading System
 -- FREE NOT FOR SALE
 
--- ❌ THIS FILE IS DEPRECATED - USE JackHub.lua INSTEAD ❌
-print("⚠️ WARNING: GuiJam00.lua is deprecated!")
-print("ℹ️ Please use JackHub.lua instead")
-print("🛑 Terminating old version to prevent conflicts...")
-return -- TERMINATE IMMEDIATELY
-
--- ============================================
--- UNIVERSAL LOCK CHECK (Prevent Duplicate with Main GUI)
--- ============================================
-if getgenv then
-    if getgenv().LYNX_GUI_RUNNING then
-        warn("⚠️ Main LYNX GUI is already running! This old version will not load.")
-        warn("ℹ️ Use JackHub.lua instead of GuiJam00.lua")
-        return
-    end
-elseif _G then
-    if _G.LYNX_GUI_RUNNING then
-        warn("⚠️ Main LYNX GUI is already running! This old version will not load.")
-        warn("ℹ️ Use JackHub.lua instead of GuiJam00.lua")
-        return
-    end
-end
+repeat task.wait() until game:IsLoaded()
 
 -- ============================================
 -- SERVICES & CORE VARIABLES
@@ -57,7 +36,7 @@ local function SendNotification(title, text, duration)
             Title = title,
             Text = text,
             Duration = duration or 5,
-            Icon = "rbxassetid://91891350821146"
+            Icon = "rbxassetid://111416780887356"
         })
     end)
 end
@@ -3263,7 +3242,7 @@ local function createMinimizedIcon()
         BackgroundColor3 = colors.bg2,
         BackgroundTransparency = 0.3,
         BorderSizePixel = 0,
-        Image = "rbxassetid://91891350821146",
+        Image = "rbxassetid://111416780887356",
         ScaleType = Enum.ScaleType.Fit,
         ZIndex = 100
     })

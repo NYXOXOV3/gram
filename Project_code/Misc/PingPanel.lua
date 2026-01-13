@@ -1,4 +1,4 @@
--- JHub Panel - Ping & CPU Monitor (Modern Redesign)
+-- Lynx Panel - Ping & CPU Monitor (Real CPU from Roblox)
 -- Module yang bisa dipanggil dengan PingFPSMonitor:Show() dan :Hide()
 
 local Players = game:GetService("Players")
@@ -6,7 +6,6 @@ local CoreGui = game:GetService("CoreGui")
 local RunService = game:GetService("RunService")
 local Stats = game:GetService("Stats")
 local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
 
 local PingFPSMonitor = {}
 PingFPSMonitor.__index = PingFPSMonitor
@@ -16,142 +15,130 @@ local updateConnection, pingUpdateConnection
 local gui = {}
 local isVisible = false
 
--- Fungsi untuk membuat GUI dengan Modern Design
+-- Fungsi untuk membuat GUI
 local function createMonitorGUI()
     -- Main ScreenGui
     local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "JHubPanelMonitor"
+    screenGui.Name = "LynxPanelMonitor"
     screenGui.ResetOnSpawn = false
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
     screenGui.DisplayOrder = 999999
     screenGui.IgnoreGuiInset = true
     screenGui.Parent = CoreGui
     
-    -- Main Container (Solid Background)
+    -- Container Frame (Lebih gelap dan transparan)
     local container = Instance.new("Frame")
     container.Name = "Container"
-    container.Size = UDim2.new(0, 240, 0, 90)
-    container.Position = UDim2.new(0.5, -120, 0, 40)
-    container.BackgroundColor3 = Color3.fromRGB(10, 13, 26) -- bg1
-    container.BackgroundTransparency = 0
+    container.Size = UDim2.new(0, 200, 0, 70)
+    container.Position = UDim2.new(0.5, -100, 0, 50)
+    container.BackgroundColor3 = Color3.fromRGB(10, 12, 15) -- Lebih gelap lagi
+    container.BackgroundTransparency = 0.3 -- Lebih transparan
     container.BorderSizePixel = 0
     container.Visible = false
     container.Parent = screenGui
     
     local containerCorner = Instance.new("UICorner")
-    containerCorner.CornerRadius = UDim.new(0, 14)
+    containerCorner.CornerRadius = UDim.new(0, 10)
     containerCorner.Parent = container
     
-    -- Header Section
+    -- Border stroke (lebih subtle)
+    local containerStroke = Instance.new("UIStroke")
+    containerStroke.Color = Color3.fromRGB(255, 140, 50)
+    containerStroke.Thickness = 1.5
+    containerStroke.Transparency = 0.6 -- Lebih transparan lagi
+    containerStroke.Parent = container
+    
+    -- Header
     local header = Instance.new("Frame")
     header.Name = "Header"
-    header.Size = UDim2.new(1, 0, 0, 32)
+    header.Size = UDim2.new(1, 0, 0, 35)
     header.BackgroundTransparency = 1
     header.Parent = container
     
-    -- Title (Centered)
+    -- Logo Icon
+    local logoIcon = Instance.new("ImageLabel")
+    logoIcon.Name = "LogoIcon"
+    logoIcon.Size = UDim2.new(0, 24, 0, 24)
+    logoIcon.Position = UDim2.new(0, 8, 0, 5)
+    logoIcon.BackgroundTransparency = 1
+    logoIcon.Image = "rbxassetid://118176705805619"
+    logoIcon.ImageTransparency = 0.2 -- Lebih transparan
+    logoIcon.ScaleType = Enum.ScaleType.Fit
+    logoIcon.Parent = header
+    
+    local logoCorner = Instance.new("UICorner")
+    logoCorner.CornerRadius = UDim.new(0, 6)
+    logoCorner.Parent = logoIcon
+    
+    -- Title
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Name = "TitleLabel"
-    titleLabel.Size = UDim2.new(1, 0, 0, 32)
-    titleLabel.Position = UDim2.new(0, 0, 0, 0)
+    titleLabel.Size = UDim2.new(1, -40, 1, 0)
+    titleLabel.Position = UDim2.new(0, 36, 0, 0)
     titleLabel.BackgroundTransparency = 1
-    titleLabel.Text = "JHUB"
-    titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    titleLabel.TextSize = 16
+    titleLabel.Text = "LYNX PANEL"
+    titleLabel.TextColor3 = Color3.fromRGB(255, 140, 50)
+    titleLabel.TextTransparency = 0.2 -- Lebih transparan
+    titleLabel.TextSize = 13
     titleLabel.Font = Enum.Font.GothamBold
-    titleLabel.TextXAlignment = Enum.TextXAlignment.Center
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
     titleLabel.Parent = header
     
-    -- Separator Line (No gradient, simple)
+    -- Separator
     local separator = Instance.new("Frame")
     separator.Name = "Separator"
-    separator.Size = UDim2.new(1, -20, 0, 1)
-    separator.Position = UDim2.new(0, 10, 0, 36)
-    separator.BackgroundColor3 = Color3.fromRGB(56, 189, 248) -- primary
-    separator.BackgroundTransparency = 0.5
+    separator.Size = UDim2.new(1, -16, 0, 1)
+    separator.Position = UDim2.new(0, 8, 0, 35)
+    separator.BackgroundColor3 = Color3.fromRGB(255, 140, 50)
+    separator.BackgroundTransparency = 0.6
     separator.BorderSizePixel = 0
     separator.Parent = container
-
-
-    -- Content Section (Metrics)
+    
+    -- Content
     local content = Instance.new("Frame")
     content.Name = "Content"
-    content.Size = UDim2.new(1, -20, 1, -48)
-    content.Position = UDim2.new(0, 10, 0, 44)
+    content.Size = UDim2.new(1, -16, 1, -42)
+    content.Position = UDim2.new(0, 8, 0, 40)
     content.BackgroundTransparency = 1
     content.Parent = container
     
-    -- Ping Card
-    local pingCard = Instance.new("Frame")
-    pingCard.Name = "PingCard"
-    pingCard.Size = UDim2.new(0.48, 0, 1, 0)
-    pingCard.Position = UDim2.new(0, 0, 0, 0)
-    pingCard.BackgroundColor3 = Color3.fromRGB(17, 24, 39) -- bg2
-    pingCard.BackgroundTransparency = 0
-    pingCard.BorderSizePixel = 0
-    pingCard.Parent = content
-    
-    local pingCardCorner = Instance.new("UICorner")
-    pingCardCorner.CornerRadius = UDim.new(0, 10)
-    pingCardCorner.Parent = pingCard
-    
-    -- Ping Icon
-    local pingIcon = Instance.new("TextLabel")
-    pingIcon.Size = UDim2.new(1, 0, 0, 14)
-    pingIcon.Position = UDim2.new(0, 0, 0, 4)
-    pingIcon.BackgroundTransparency = 1
-    pingIcon.Text = "📶"
-    pingIcon.TextSize = 14
-    pingIcon.Parent = pingCard
-    
-    -- Ping Label
+    -- Ping Display
     local pingLabel = Instance.new("TextLabel")
     pingLabel.Name = "PingLabel"
-    pingLabel.Size = UDim2.new(1, -8, 0, 20)
-    pingLabel.Position = UDim2.new(0, 4, 0, 18)
+    pingLabel.Size = UDim2.new(0.5, -6, 1, 0)
+    pingLabel.Position = UDim2.new(0, 0, 0, 0)
     pingLabel.BackgroundTransparency = 1
-    pingLabel.Text = "0 ms"
-    pingLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    pingLabel.TextSize = 14
+    pingLabel.Text = "Ping: 0 ms"
+    pingLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+    pingLabel.TextTransparency = 0.1
+    pingLabel.TextSize = 13
     pingLabel.Font = Enum.Font.GothamBold
     pingLabel.TextXAlignment = Enum.TextXAlignment.Center
-    pingLabel.Parent = pingCard
+    pingLabel.Parent = content
     
-    -- CPU Card
-    local cpuCard = Instance.new("Frame")
-    cpuCard.Name = "CPUCard"
-    cpuCard.Size = UDim2.new(0.48, 0, 1, 0)
-    cpuCard.Position = UDim2.new(0.52, 0, 0, 0)
-    cpuCard.BackgroundColor3 = Color3.fromRGB(17, 24, 39) -- bg2
-    cpuCard.BackgroundTransparency = 0
-    cpuCard.BorderSizePixel = 0
-    cpuCard.Parent = content
+    -- Vertical separator
+    local verticalSeparator = Instance.new("Frame")
+    verticalSeparator.Name = "VerticalSeparator"
+    verticalSeparator.Size = UDim2.new(0, 1, 0.7, 0)
+    verticalSeparator.Position = UDim2.new(0.5, 0, 0.15, 0)
+    verticalSeparator.BackgroundColor3 = Color3.fromRGB(255, 140, 50)
+    verticalSeparator.BackgroundTransparency = 0.6
+    verticalSeparator.BorderSizePixel = 0
+    verticalSeparator.Parent = content
     
-    local cpuCardCorner = Instance.new("UICorner")
-    cpuCardCorner.CornerRadius = UDim.new(0, 10)
-    cpuCardCorner.Parent = cpuCard
-    
-    -- CPU Icon
-    local cpuIcon = Instance.new("TextLabel")
-    cpuIcon.Size = UDim2.new(1, 0, 0, 14)
-    cpuIcon.Position = UDim2.new(0, 0, 0, 4)
-    cpuIcon.BackgroundTransparency = 1
-    cpuIcon.Text = "⚡"
-    cpuIcon.TextSize = 14
-    cpuIcon.Parent = cpuCard
-    
-    -- CPU Label
+    -- CPU Display
     local cpuLabel = Instance.new("TextLabel")
     cpuLabel.Name = "CPULabel"
-    cpuLabel.Size = UDim2.new(1, -8, 0, 20)
-    cpuLabel.Position = UDim2.new(0, 4, 0, 18)
+    cpuLabel.Size = UDim2.new(0.5, -6, 1, 0)
+    cpuLabel.Position = UDim2.new(0.5, 6, 0, 0)
     cpuLabel.BackgroundTransparency = 1
-    cpuLabel.Text = "0%"
-    cpuLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    cpuLabel.TextSize = 14
+    cpuLabel.Text = "CPU: 0%"
+    cpuLabel.TextColor3 = Color3.fromRGB(100, 255, 150)
+    cpuLabel.TextTransparency = 0.1
+    cpuLabel.TextSize = 13
     cpuLabel.Font = Enum.Font.GothamBold
     cpuLabel.TextXAlignment = Enum.TextXAlignment.Center
-    cpuLabel.Parent = cpuCard
+    cpuLabel.Parent = content
     
     -- Make draggable
     local dragging = false
@@ -189,14 +176,12 @@ local function createMonitorGUI()
         end
     end)
     
-    
     return {
         ScreenGui = screenGui,
         Container = container,
         PingLabel = pingLabel,
         CPULabel = cpuLabel,
-        PingCard = pingCard,
-        CPUCard = cpuCard
+        LogoIcon = logoIcon
     }
 end
 
@@ -303,51 +288,36 @@ local function getCPU()
     return math.clamp(cpu, 0, 100)
 end
 
--- Update colors with smooth animations
--- Update colors with smooth animations (Text Color Only)
-local function updatePingColor(pingLabel, pingCard, value)
+-- Update colors
+local function updatePingColor(pingLabel, value)
     local ping = tonumber(value)
-    local targetColor
-    
     if ping <= 50 then
-        targetColor = Color3.fromRGB(34, 197, 94) -- Green
+        pingLabel.TextColor3 = Color3.fromRGB(100, 255, 150)
     elseif ping <= 100 then
-        targetColor = Color3.fromRGB(245, 158, 11) -- Amber
+        pingLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
     elseif ping <= 150 then
-        targetColor = Color3.fromRGB(230, 100, 50) -- Orange
+        pingLabel.TextColor3 = Color3.fromRGB(255, 150, 100)
     else
-        targetColor = Color3.fromRGB(239, 68, 68) -- Red
+        pingLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
     end
-    
-    -- Animate Text Color instead of Card Background
-    TweenService:Create(pingLabel, TweenInfo.new(0.5), {
-        TextColor3 = targetColor
-    }):Play()
 end
 
-local function updateCPUColor(cpuLabel, cpuCard, value)
+local function updateCPUColor(cpuLabel, value)
     local cpu = tonumber(value)
-    local targetColor
-    
     if cpu <= 35 then
-        targetColor = Color3.fromRGB(34, 197, 94) -- Green
+        cpuLabel.TextColor3 = Color3.fromRGB(100, 255, 150)
     elseif cpu <= 60 then
-        targetColor = Color3.fromRGB(245, 158, 11) -- Amber
+        cpuLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
     elseif cpu <= 80 then
-        targetColor = Color3.fromRGB(230, 100, 50) -- Orange
+        cpuLabel.TextColor3 = Color3.fromRGB(255, 150, 100)
     else
-        targetColor = Color3.fromRGB(239, 68, 68) -- Red
+        cpuLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
     end
-    
-    -- Animate Text Color instead of Card Background
-    TweenService:Create(cpuLabel, TweenInfo.new(0.5), {
-        TextColor3 = targetColor
-    }):Play()
 end
 
 -- Initialize GUI
 local function initializeGUI()
-    local existing = CoreGui:FindFirstChild("JHubPanelMonitor")
+    local existing = CoreGui:FindFirstChild("LynxPanelMonitor")
     if existing then
         existing:Destroy()
         task.wait(0.1)
@@ -379,8 +349,8 @@ function PingFPSMonitor:Show()
             local currentTime = tick()
             if currentTime - lastCPUUpdate >= 0.5 then
                 local cpu = getCPU()
-                gui.CPULabel.Text = tostring(cpu) .. "%"
-                updateCPUColor(gui.CPULabel, gui.CPUCard, cpu)
+                gui.CPULabel.Text = "CPU: " .. tostring(cpu) .. "%"
+                updateCPUColor(gui.CPULabel, cpu)
                 lastCPUUpdate = currentTime
             end
         end)
@@ -397,13 +367,13 @@ function PingFPSMonitor:Show()
             local currentTime = tick()
             if currentTime - lastPingUpdate >= 0.5 then
                 local ping = getPing()
-                gui.PingLabel.Text = tostring(ping) .. " ms"
-                updatePingColor(gui.PingLabel, gui.PingCard, ping)
+                gui.PingLabel.Text = "Ping: " .. ping .. " ms"
+                updatePingColor(gui.PingLabel, ping)
                 lastPingUpdate = currentTime
             end
         end)
         
-        print("✅ JHub Monitor aktif! (Ping & Real CPU)")
+        print("✅ Lynx Monitor aktif! (Ping & Real CPU)")
     end
 end
 
@@ -423,7 +393,7 @@ function PingFPSMonitor:Hide()
             pingUpdateConnection = nil
         end
         
-        print("✅ JHub Monitor disembunyikan!")
+        print("✅ Lynx Monitor disembunyikan!")
     end
 end
 
