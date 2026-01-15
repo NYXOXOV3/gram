@@ -1,6 +1,5 @@
--- ============================================================
--- 🔒 JackHub Security Loader v2.3.0 (FINAL HARDENED)
--- ============================================================
+-- UPDATED SECURITY LOADER - Includes EventTeleportDynamiefws
+-- Replace your SecurityLoader.lua with this
 
 local SecurityLoader = {}
 
@@ -9,257 +8,270 @@ local SecurityLoader = {}
 -- ============================================
 local CONFIG = {
     VERSION = "2.3.0",
+    ALLOWED_DOMAIN = "raw.githubusercontent.com",
     MAX_LOADS_PER_SESSION = 100,
     ENABLE_RATE_LIMITING = true,
-
-    DEBUG = {
-        ENABLED = true,
-        VERBOSE = true,
-        PREFIX = "[SECURITY-DEBUG]"
-    }
+    ENABLE_DOMAIN_CHECK = true,
+    ENABLE_VERSION_CHECK = false
 }
 
 -- ============================================
--- DEBUG HELPERS
--- ============================================
-local function dlog(...)
-    if CONFIG.DEBUG.ENABLED then
-        print(CONFIG.DEBUG.PREFIX, ...)
-    end
-end
-
-local function dwarn(...)
-    if CONFIG.DEBUG.ENABLED then
-        warn(CONFIG.DEBUG.PREFIX, ...)
-    end
-end
-
--- ============================================
--- SECRET KEY (UNCHANGED)
+-- OBFUSCATED SECRET KEY
 -- ============================================
 local SECRET_KEY = (function()
     local parts = {
-        string.char(76,121,110,120),
-        string.char(71,85,73,95),
+        string.char(76, 121, 110, 120),
+        string.char(71, 85, 73, 95),
         "SuperSecret_",
         tostring(2024),
-        string.char(33,64,35,36,37,94)
+        string.char(33, 64, 35, 36, 37, 94)
     }
     return table.concat(parts)
 end)()
 
 -- ============================================
--- DECRYPT FUNCTION
+-- DECRYPTION FUNCTION
 -- ============================================
 local function decrypt(encrypted, key)
-    dlog("Decrypt start")
-
-    if type(encrypted) ~= "string" then
-        dwarn("Decrypt failed: not string")
-        return nil
-    end
-
     local b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-    encrypted = encrypted:gsub("[^"..b64.."=]", "")
-
-    local ok, decoded = pcall(function()
-        return (encrypted:gsub(".", function(x)
-            if x == "=" then return "" end
-            local r, f = "", (b64:find(x) - 1)
-            for i = 6, 1, -1 do
-                r = r .. ((f % 2^i - f % 2^(i-1) > 0) and "1" or "0")
-            end
-            return r
-        end):gsub("%d%d%d%d%d%d%d%d", function(x)
-            local c = 0
-            for i = 1, 8 do
-                c = c + (x:sub(i,i) == "1" and 2^(8-i) or 0)
-            end
-            return string.char(c)
-        end))
-    end)
-
-    if not ok then
-        dwarn("Base64 decode failed")
-        return nil
-    end
-
-    local out = {}
+    encrypted = encrypted:gsub('[^'..b64..'=]', '')
+    
+    local decoded = (encrypted:gsub('.', function(x)
+        if x == '=' then return '' end
+        local r, f = '', (b64:find(x)-1)
+        for i=6,1,-1 do 
+            r = r .. (f%2^i-f%2^(i-1)>0 and '1' or '0') 
+        end
+        return r
+    end):gsub('%d%d%d?%d?%d?%d?%d?%d?', function(x)
+        if #x ~= 8 then return '' end
+        local c = 0
+        for i=1,8 do 
+            c = c + (x:sub(i,i)=='1' and 2^(8-i) or 0) 
+        end
+        return string.char(c)
+    end))
+    
+    local result = {}
     for i = 1, #decoded do
-        out[i] = string.char(
-            bit32.bxor(
-                decoded:byte(i),
-                key:byte((i - 1) % #key + 1)
-            )
-        )
+        local byte = string.byte(decoded, i)
+        local keyByte = string.byte(key, ((i - 1) % #key) + 1)
+        table.insert(result, string.char(bit32.bxor(byte, keyByte)))
     end
-
-    local url = table.concat(out)
-    dlog("Decrypt success:", CONFIG.DEBUG.VERBOSE and url or "[hidden]")
-    return url
+    
+    return table.concat(result)
 end
 
 -- ============================================
--- RATE LIMIT
+-- RATE LIMITING
 -- ============================================
-local loadCounts, lastLoadTime = {}, {}
+local loadCounts = {}
+local lastLoadTime = {}
 
 local function checkRateLimit()
     if not CONFIG.ENABLE_RATE_LIMITING then
         return true
     end
-
-    local id = game:GetService("RbxAnalyticsService"):GetClientId()
-    local now = tick()
-
-    loadCounts[id] = loadCounts[id] or 0
-    lastLoadTime[id] = lastLoadTime[id] or 0
-
-    if now - lastLoadTime[id] > 3600 then
-        loadCounts[id] = 0
+    
+    local identifier = game:GetService("RbxAnalyticsService"):GetClientId()
+    local currentTime = tick()
+    
+    loadCounts[identifier] = loadCounts[identifier] or 0
+    lastLoadTime[identifier] = lastLoadTime[identifier] or 0
+    
+    if currentTime - lastLoadTime[identifier] > 3600 then
+        loadCounts[identifier] = 0
     end
-
-    if loadCounts[id] >= CONFIG.MAX_LOADS_PER_SESSION then
-        dwarn("Rate limit exceeded:", loadCounts[id])
+    
+    if loadCounts[identifier] >= CONFIG.MAX_LOADS_PER_SESSION then
+        warn("⚠️ Rate limit exceeded. Please wait before reloading.")
         return false
     end
-
-    loadCounts[id] += 1
-    lastLoadTime[id] = now
-    dlog("RateLimit OK:", loadCounts[id])
-
+    
+    loadCounts[identifier] = loadCounts[identifier] + 1
+    lastLoadTime[identifier] = currentTime
+    
     return true
 end
 
 -- ============================================
--- URL NORMALIZER & VALIDATOR (NEW 🔥)
+-- DOMAIN VALIDATION
 -- ============================================
-local function normalizeURL(url)
-    if type(url) ~= "string" then
-        return nil, "URL not string"
+local function validateDomain(url)
+    if not CONFIG.ENABLE_DOMAIN_CHECK then
+        return true
     end
-
-    if not url:match("^https://raw%.githubusercontent%.com/") then
-        return nil, "Not raw.githubusercontent.com"
+    
+    if not url:find(CONFIG.ALLOWED_DOMAIN, 1, true) then
+        warn("🚫 Security: Invalid domain detected")
+        return false
     end
-
-    if url:find("/refs/heads/", 1, true) then
-        return nil, "refs/heads is not allowed"
-    end
-
-    if not url:lower():match("%.lua$") then
-        return nil, "Invalid extension (must .lua)"
-    end
-
-    return url
+    
+    return true
 end
 
 -- ============================================
--- 🔐 ENCRYPTED MODULE URLS (AS-IS)
+-- ENCRYPTED MODULE URLS (ALL 28 MODULES)
 -- ============================================
 local encryptedURLs = {
-    instant = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0sGixGUVxADyxWRQ==",
-    instant2 = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0sGixGUVxAE25PUUQ=",
-    blatantv1 = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0wAD5fUR12TSFXRUsqGkhAFDI0",
-    UltraBlatant = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0wAD5fUR12TSFXRUsqGktAFDI0",
-    blatantv2 = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0nGD5GUVxAd3INSFA/",
-    blatantv2fix = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0wAD5fUR12TSFXRUsqChAWHSMDeHE/ABE=",
-    NoFishingAnimation = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0wAD5fUR16TgZKV003Ih4vFi44KCs6Gh5LHiYE",
-    LockPosition = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0wAD5fUR14TiNIdEotJQ0HFyl7JSoy",
-    AutoEquipRod = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0wAD5fUR11VDRMYVQrJQk8FyN7JSoy",
-    DisableCutscenes = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0wAD5fUR1wSDNCRkk7DwwaCyQwJzogWxwQEw==",
-    DisableExtras = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0wAD5fUR1wSDNCRkk7CQEaCiYmZzMmFA==",
-    AutoTotem3X = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0wAD5fUR11VDRMcEoqKRRdAGk5PD4=",
-    SkinAnimation = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0wAD5fUR1nSilNd1I/PDgAESo0PTY8G14JBzI=",
-    WalkOnWater = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0wAD5fUR1jQCxIa0sJLQ0LCmk5PD4=",
-    TeleportModule = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0xETNXQF1GVQ1MQFAyKVcCDSY=",
-    TeleportToPlayer = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0xETNXQF1GVRNaV1E7IVY6HSswOTAhASQKIj8EGhcXWjNHUQ==",
-    SavedLocation = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0xETNXQF1GVRNaV1E7IVY9GTEwLRM8FhERGzwLTR4QFQ==",
-    AutoQuestModule = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl00ATpBRB11VDRMdVA7Pw0jFyMgJTp9GQUE",
-    AutoTemple = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl00ATpBRB14RDZGVnQrKQoaVisgKA==",
-    TempleDataReader = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl00ATpBRB1gRC1TSEAaLQ0PKiI0LTohWxwQEw==",
-    AutoSell = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl02HDBCdldVVTVRQVZxDQwaFxQwJTN9GQUE",
-    AutoSellTimer = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl02HDBCdldVVTVRQVZxDQwaFxQwJTMHHB0AAH0JFhM=",
-    MerchantSystem = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl02HDBCdldVVTVRQVZxAwkLFhQ9Ji99GQUE",
-    RemoteBuyer = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl02HDBCdldVVTVRQVZxHhwDFzMwCyoqEAJLHiYE",
-    FreecamModule = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0mFTJXQlMRE3B1TUApYz8cHSI2KDIeGhQQHjZLDwcE",
-    UnlimitedZoomModule = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0mFTJXQlMRE3B1TUApYywAFC44ICs2ESoKHT5LDwcE",
-    AntiAFK = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0oHSxRH3NaVSliYm5wIAwP",
-    UnlockFPS = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0oHSxRH2daTS9AT2MOH1cCDSY=",
-    FPSBooster = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0oHSxRH3REUgJMS1YqKQtAFDI0",
-    AutoBuyWeather = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl02HDBCdldVVTVRQVZxDQwaFwUgMAg2FAQNFyFLDwcE",
-    Notify = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0xETNXQF1GVRNaV1E7IVYgFzM8LzYwFAQMHT0oDBYQGDocXEdV",
+    instant = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6ADEgARELBn0JFhM=",
+    instant2 = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6ADEgARELBmFLDwcE",
+    blatantv1 = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6HCsyGBFKMD8EFxMLAAkDHl5BQA==",
+    UltraBlatant = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6HCsyGBFKMD8EFxMLAAkAHl5BQA==",
+    blatantv2 = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6CzMyARELBgVXTR4QFQ==",
+    blatantv2fix = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6HCsyGBFKMD8EFxMLABlbSFdQd3ENSFA/",
+    NoFishingAnimation = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6HCsyGBFKPDwjCgENHTFVcVxdTCFXTUowYhUbGQ==",
+    LockPosition = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6HCsyGBFKPjwGCCIKBzZGWV1aDyxWRQ==",
+    AutoEquipRod = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6HCsyGBFKMyYRDDcUATZCYl1QDyxWRQ==",
+    DisableCutscenes = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6HCsyGBFKNjoWAhAJERxHREFXRC5GVwsyORg=",
+    DisableExtras = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6HCsyGBFKNjoWAhAJERpKREBVUm5PUUQ=",
+    AutoTotem3X = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6HCsyGBFKMyYRDCYKADpfA0oaTTVC",
+    SkinAnimation = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6HCsyGBFKITgMDSESFS9zXltZQDRKS0twIAwP",
+    WalkOnWater = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6HCsyGBFKJTIJCD0LIz5GVUAaTTVC",
+    TeleportModule = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6HTo/EAAKACcoDBYQGDocXEdV",
+    TeleportToPlayer = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6HTo/EAAKACc2GgERETIdZFdYRDBMVlEKIykCGT4wO3E/ABE=",
+    SavedLocation = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6HTo/EAAKACc2GgERETIdY1NCRCRvS0Y/OBABFmk5PD4=",
+    AutoQuestModule = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6GCo2BgRKMyYRDCMQESxGfV1QVCxGCkkrLQ==",
+    AutoTemple = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6GCo2BgRKPjYTBgA0ATpBRBxYVCE=",
+    TempleDataReader = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6GCo2BgRKJjYIEx4AMD5GUWBRQCRGVgsyORg=",
+    AutoSell = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6Gjc8BTYAEycQERcWWx5HRF1nRCxPCkkrLQ==",
+    AutoSellTimer = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6Gjc8BTYAEycQERcWWx5HRF1nRCxPcEwzKQtAFDI0",
+    MerchantSystem = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6Gjc8BTYAEycQERcWWxBCVVxnSS9TCkkrLQ==",
+    RemoteBuyer = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6Gjc8BTYAEycQERcWWw1XXV1ARAJWXUAsYhUbGQ==",
+    FreecamModule = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6Cj4+EAIEV2FVNRsAA3B0QldRQiFOaUo6ORULVisgKA==",
+    UnlimitedZoomModule = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6Cj4+EAIEV2FVNRsAA3BnXl5dTClXQUEEIxYDVisgKA==",
+    AntiAFK = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6BDYgFl8kHCcMIjQuWjNHUQ==",
+    UnlockFPS = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6BDYgFl8wHD8KABkjJAwcXEdV",
+    FPSBooster = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6BDYgFl8jAiAnDB0WADpAHl5BQA==",
+    AutoBuyWeather = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6Gjc8BTYAEycQERcWWx5HRF12VDl0QUQqJBwcVisgKA==",
+    Notify = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6HTo/EAAKACc2GgERETIdfl1ASCZKR0QqJRYANSgxPDM2WxwQEw==",
     
     -- ✅ NEW: EventTeleportDynamic (ADDED)
-    EventTeleportDynamic = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0xETNXQF1GVRNaV1E7IVYrDiI7PQs2GRUVHSERJwsLFTJbUxxYVCE=",
+    EventTeleportDynamic = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6HTo/EAAKACc2GgERETIddURRTzR3QUk7PBYcDAMsJz4+HBNLHiYE",
     
     -- ✅ EXISTING: HideStats & Webhook (already encrypted)
-    HideStats = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0oHSxRH3pdRSVwUEQqP1cCDSY=",
-    Webhook = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0oHSxRH2VRQyhMS05wIAwP",
-    GoodPerfectionStable = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0wAD5fUR1kRDJFQUYqJRYAPyg6LXE/ABE=",
-    DisableRendering = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0oHSxRH3ZdUiFBSEAMKRcKHTU8Jzh9GQUE",
-    AutoFavorite = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0kAStddlNCTjJKUEBwIAwP",
-    PingFPSMonitor = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0oHSxRH2JdTydzRUs7IFcCDSY=",
-    MovementModule = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0oHSxRH39bVyVOQUsqARYKDSswZzMmFA==",
-    AutoSellSystem = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl02HDBCdldVVTVRQVZxDQwaFxQwJTMADAMRFz5LDwcE",
-    ManualSave = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0oHSxRH39VTzVCSHY/OhxAFDI0",
+    HideStats = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6BDYgFl8tGzcAMAYEACwcXEdV",
+    Webhook = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6BDYgFl8yFzENDB0OWjNHUQ==",
+    GoodPerfectionStable = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6HCsyGBFKIjYXBRcGADZdXnVbTiQNSFA/",
+    DisableRendering = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6BDYgFl8hGyAEAR4AJjpcVFdGSC5ECkkrLQ==",
+    AutoFavorite = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6CConGjYEBDwXCgYAWjNHUQ==",
+    PingFPSMonitor = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6BDYgFl81Gz0CMxMLETMcXEdV",
+    MovementModule = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6BDYgFl8oHSUADhcLABJdVEdYRG5PUUQ=",
+    AutoSellSystem = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6Gjc8BTYAEycQERcWWx5HRF1nRCxPd1wtOBwDVisgKA==",
+    ManualSave = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6BDYgFl8oEz0QAh42FSlXHl5BQA==",
 }
 
 -- ============================================
--- LOAD MODULE
+-- LOAD MODULE FUNCTION
 -- ============================================
 function SecurityLoader.LoadModule(moduleName)
-    dlog("LoadModule:", moduleName)
-
     if not checkRateLimit() then
         return nil
     end
-
+    
     local encrypted = encryptedURLs[moduleName]
     if not encrypted then
-        dwarn("Module not found:", moduleName)
+        warn("❌ Module not found:", moduleName)
         return nil
     end
-
-    local rawURL = decrypt(encrypted, SECRET_KEY)
-    if not rawURL then
-        dwarn("Decrypt failed:", moduleName)
+    
+    local url = decrypt(encrypted, SECRET_KEY)
+    
+    if not validateDomain(url) then
         return nil
     end
-
-    local url, reason = normalizeURL(rawURL)
-    if not url then
-        dwarn("URL rejected:", moduleName, "|", reason)
-        return nil
-    end
-
-    dlog("HttpGet start")
-
+    
     local success, result = pcall(function()
-        local src = game:HttpGet(url)
-        dlog("HttpGet success | bytes:", #src)
-
-        local fn, err = loadstring(src)
-        if not fn then error(err) end
-        return fn()
+        return loadstring(game:HttpGet(url))()
     end)
-
+    
     if not success then
-        dwarn("Module load failed:", moduleName, "|", result)
+        warn("❌ Failed to load", moduleName, ":", result)
         return nil
     end
-
-    dlog("Module loaded:", moduleName)
+    
     return result
 end
 
 -- ============================================
--- INIT
+-- ANTI-DUMP PROTECTION (COMPATIBLE VERSION)
 -- ============================================
+function SecurityLoader.EnableAntiDump()
+    local mt = getrawmetatable(game)
+    if not mt then 
+        warn("⚠️ Anti-Dump: Metatable not accessible")
+        return 
+    end
+    
+    local oldNamecall = mt.__namecall
+    
+    -- Check if newcclosure is available
+    local hasNewcclosure = pcall(function() return newcclosure end) and newcclosure
+    
+    local success = pcall(function()
+        setreadonly(mt, false)
+        
+        local protectedCall = function(self, ...)
+            local method = getnamecallmethod()
+            
+            if method == "HttpGet" or method == "GetObjects" then
+                local caller = getcallingscript and getcallingscript()
+                if caller and caller ~= script then
+                    warn("🚫 Blocked unauthorized HTTP request")
+                    return ""
+                end
+            end
+            
+            return oldNamecall(self, ...)
+        end
+        
+        -- Use newcclosure if available, otherwise use regular function
+        mt.__namecall = hasNewcclosure and newcclosure(protectedCall) or protectedCall
+        
+        setreadonly(mt, true)
+    end)
+    
+    if success then
+        print("🛡️ Anti-Dump Protection: ACTIVE")
+    else
+        warn("⚠️ Anti-Dump: Failed to apply (executor limitation)")
+    end
+end
+
+-- ============================================
+-- UTILITY FUNCTIONS
+-- ============================================
+function SecurityLoader.GetSessionInfo()
+    local info = {
+        Version = CONFIG.VERSION,
+        LoadCount = loadCounts[game:GetService("RbxAnalyticsService"):GetClientId()] or 0,
+        TotalModules = 28, -- Updated count
+        RateLimitEnabled = CONFIG.ENABLE_RATE_LIMITING,
+        DomainCheckEnabled = CONFIG.ENABLE_DOMAIN_CHECK
+    }
+    
+    print("━━━━━━━━━━━━━━━━━━━━━━")
+    print("📊 Session Info:")
+    for k, v in pairs(info) do
+        print(k .. ":", v)
+    end
+    print("━━━━━━━━━━━━━━━━━━━━━━")
+    
+    return info
+end
+
+function SecurityLoader.ResetRateLimit()
+    local identifier = game:GetService("RbxAnalyticsService"):GetClientId()
+    loadCounts[identifier] = 0
+    lastLoadTime[identifier] = 0
+    print("✅ Rate limit reset")
+end
+
 print("━━━━━━━━━━━━━━━━━━━━━━")
-print("🔒 JackHub Security Loader v"..CONFIG.VERSION)
-print("🛡 URL Sanitize: ENABLED")
-print("🛠 Debug:", CONFIG.DEBUG.ENABLED and "ON" or "OFF")
+print("🔒 JackHub Security Loader v" .. CONFIG.VERSION)
+print("✅ Total Modules: 28 (EventTeleport added!)")
+print("✅ Rate Limiting:", CONFIG.ENABLE_RATE_LIMITING and "ENABLED" or "DISABLED")
+print("✅ Domain Check:", CONFIG.ENABLE_DOMAIN_CHECK and "ENABLED" or "DISABLED")
 print("━━━━━━━━━━━━━━━━━━━━━━")
 
 return SecurityLoader
