@@ -1707,7 +1707,7 @@ end
 -- ============================================
 -- CONFIG SYSTEM
 -- ============================================
-local ConfigSystem = loadstring(game:HttpGet("https://raw.githubusercontent.com/mriya23/Fish-It/main/SecurityLoader.lua"))()
+local ConfigSystem = loadstring(game:HttpGet("https://raw.githubusercontent.com/NYXOXOV3/gram/main/SecurityLoader.lua"))()
 
 -- Inject Local Config Management (Fixes Persistence)
 if ConfigSystem then
