@@ -1,5 +1,5 @@
 -- ============================================================
--- 🔒 UPDATED SECURITY LOADER v2.3.0 (FULL DEBUG VERSION)
+-- 🔒 JackHub Security Loader v2.3.0 (FINAL HARDENED)
 -- ============================================================
 
 local SecurityLoader = {}
@@ -9,11 +9,8 @@ local SecurityLoader = {}
 -- ============================================
 local CONFIG = {
     VERSION = "2.3.0",
-    ALLOWED_DOMAIN = "raw.githubusercontent.com",
     MAX_LOADS_PER_SESSION = 100,
     ENABLE_RATE_LIMITING = true,
-    ENABLE_DOMAIN_CHECK = true,
-    ENABLE_VERSION_CHECK = false,
 
     DEBUG = {
         ENABLED = true,
@@ -38,7 +35,7 @@ local function dwarn(...)
 end
 
 -- ============================================
--- OBFUSCATED SECRET KEY
+-- SECRET KEY (UNCHANGED)
 -- ============================================
 local SECRET_KEY = (function()
     local parts = {
@@ -52,61 +49,63 @@ local SECRET_KEY = (function()
 end)()
 
 -- ============================================
--- DECRYPTION FUNCTION (DEBUG)
+-- DECRYPT FUNCTION
 -- ============================================
 local function decrypt(encrypted, key)
     dlog("Decrypt start")
 
     if type(encrypted) ~= "string" then
-        dwarn("Decrypt failed: encrypted not string")
+        dwarn("Decrypt failed: not string")
         return nil
     end
 
     local b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-    encrypted = encrypted:gsub('[^'..b64..'=]', '')
+    encrypted = encrypted:gsub("[^"..b64.."=]", "")
 
     local ok, decoded = pcall(function()
-        return (encrypted:gsub('.', function(x)
-            if x == '=' then return '' end
-            local r, f = '', (b64:find(x)-1)
-            for i=6,1,-1 do
-                r = r .. (f%2^i-f%2^(i-1)>0 and '1' or '0')
+        return (encrypted:gsub(".", function(x)
+            if x == "=" then return "" end
+            local r, f = "", (b64:find(x) - 1)
+            for i = 6, 1, -1 do
+                r = r .. ((f % 2^i - f % 2^(i-1) > 0) and "1" or "0")
             end
             return r
-        end):gsub('%d%d%d%d%d%d%d%d', function(x)
+        end):gsub("%d%d%d%d%d%d%d%d", function(x)
             local c = 0
-            for i=1,8 do
-                c = c + (x:sub(i,i)=='1' and 2^(8-i) or 0)
+            for i = 1, 8 do
+                c = c + (x:sub(i,i) == "1" and 2^(8-i) or 0)
             end
             return string.char(c)
         end))
     end)
 
     if not ok then
-        dwarn("Base64 decode failed:", decoded)
+        dwarn("Base64 decode failed")
         return nil
     end
 
-    local result = {}
+    local out = {}
     for i = 1, #decoded do
-        local b = decoded:byte(i)
-        local k = key:byte(((i - 1) % #key) + 1)
-        result[i] = string.char(bit32.bxor(b, k))
+        out[i] = string.char(
+            bit32.bxor(
+                decoded:byte(i),
+                key:byte((i - 1) % #key + 1)
+            )
+        )
     end
 
-    local url = table.concat(result)
+    local url = table.concat(out)
     dlog("Decrypt success:", CONFIG.DEBUG.VERBOSE and url or "[hidden]")
     return url
 end
 
 -- ============================================
--- RATE LIMITING (DEBUG)
+-- RATE LIMIT
 -- ============================================
 local loadCounts, lastLoadTime = {}, {}
 
 local function checkRateLimit()
     if not CONFIG.ENABLE_RATE_LIMITING then
-        dlog("RateLimit disabled")
         return true
     end
 
@@ -117,12 +116,11 @@ local function checkRateLimit()
     lastLoadTime[id] = lastLoadTime[id] or 0
 
     if now - lastLoadTime[id] > 3600 then
-        dlog("RateLimit reset")
         loadCounts[id] = 0
     end
 
     if loadCounts[id] >= CONFIG.MAX_LOADS_PER_SESSION then
-        dwarn("RateLimit exceeded:", loadCounts[id])
+        dwarn("Rate limit exceeded:", loadCounts[id])
         return false
     end
 
@@ -134,27 +132,30 @@ local function checkRateLimit()
 end
 
 -- ============================================
--- DOMAIN VALIDATION (DEBUG)
+-- URL NORMALIZER & VALIDATOR (NEW 🔥)
 -- ============================================
-local function validateDomain(url)
-    dlog("ValidateDomain:", url)
-
-    if not CONFIG.ENABLE_DOMAIN_CHECK then
-        return true
+local function normalizeURL(url)
+    if type(url) ~= "string" then
+        return nil, "URL not string"
     end
 
-    if not url or not url:find(CONFIG.ALLOWED_DOMAIN, 1, true) then
-        dwarn("Invalid domain:", url)
-        return false
+    if not url:match("^https://raw%.githubusercontent%.com/") then
+        return nil, "Not raw.githubusercontent.com"
     end
 
-    dlog("Domain valid")
-    return true
+    if url:find("/refs/heads/", 1, true) then
+        return nil, "refs/heads is not allowed"
+    end
+
+    if not url:lower():match("%.lua$") then
+        return nil, "Invalid extension (must .lua)"
+    end
+
+    return url
 end
 
 -- ============================================
--- 🔐 ENCRYPTED MODULE URLS
--- (PUNYA LO — TIDAK DIUBAH)
+-- 🔐 ENCRYPTED MODULE URLS (AS-IS)
 -- ============================================
 local encryptedURLs = {
     instant = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KBjpUQx1cRCFHVwozLRAAVxcnJjU2FgQ6ETwBBl0sGixGUVxADyxWRQ==",
@@ -205,13 +206,12 @@ local encryptedURLs = {
 }
 
 -- ============================================
--- LOAD MODULE FUNCTION (FULL TRACE)
+-- LOAD MODULE
 -- ============================================
 function SecurityLoader.LoadModule(moduleName)
     dlog("LoadModule:", moduleName)
 
     if not checkRateLimit() then
-        dwarn("Load aborted: rate limit")
         return nil
     end
 
@@ -221,13 +221,15 @@ function SecurityLoader.LoadModule(moduleName)
         return nil
     end
 
-    local url = decrypt(encrypted, SECRET_KEY)
-    if not url then
+    local rawURL = decrypt(encrypted, SECRET_KEY)
+    if not rawURL then
         dwarn("Decrypt failed:", moduleName)
         return nil
     end
 
-    if not validateDomain(url) then
+    local url, reason = normalizeURL(rawURL)
+    if not url then
+        dwarn("URL rejected:", moduleName, "|", reason)
         return nil
     end
 
@@ -238,7 +240,7 @@ function SecurityLoader.LoadModule(moduleName)
         dlog("HttpGet success | bytes:", #src)
 
         local fn, err = loadstring(src)
-        if not fn then error("loadstring error: "..tostring(err)) end
+        if not fn then error(err) end
         return fn()
     end)
 
@@ -252,47 +254,11 @@ function SecurityLoader.LoadModule(moduleName)
 end
 
 -- ============================================
--- ANTI-DUMP PROTECTION (DEBUG SAFE)
--- ============================================
-function SecurityLoader.EnableAntiDump()
-    dlog("EnableAntiDump called")
-
-    if not getrawmetatable then
-        dwarn("Executor does not support getrawmetatable")
-        return
-    end
-
-    local mt = getrawmetatable(game)
-    if not mt then
-        dwarn("Metatable inaccessible")
-        return
-    end
-
-    local old = mt.__namecall
-    local hasNC = pcall(function() return newcclosure end) and newcclosure
-
-    setreadonly(mt, false)
-
-    mt.__namecall = hasNC and newcclosure(function(self, ...)
-        local method = getnamecallmethod()
-        if method == "HttpGet" then
-            dwarn("Blocked external HttpGet")
-            return ""
-        end
-        return old(self, ...)
-    end) or function(self, ...)
-        return old(self, ...)
-    end
-
-    setreadonly(mt, true)
-    dlog("AntiDump ACTIVE")
-end
-
--- ============================================
 -- INIT
 -- ============================================
 print("━━━━━━━━━━━━━━━━━━━━━━")
 print("🔒 JackHub Security Loader v"..CONFIG.VERSION)
+print("🛡 URL Sanitize: ENABLED")
 print("🛠 Debug:", CONFIG.DEBUG.ENABLED and "ON" or "OFF")
 print("━━━━━━━━━━━━━━━━━━━━━━")
 
