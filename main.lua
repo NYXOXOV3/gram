@@ -58,6 +58,7 @@ local FPSBooster = SecurityLoader.LoadModule("FPSBooster")
 local AutoBuyWeather = SecurityLoader.LoadModule("AutoBuyWeather")
 local Notify = SecurityLoader.LoadModule("Notify")
 local GoodPerfectionStable = SecurityLoader.LoadModule("GoodPerfectionStable")
+local PingFPSMonitor = SecurityLoader.LoadModule("PingFPSMonitor")
 
 
 -- Continue with rest of your GUI code...
@@ -1290,6 +1291,16 @@ end)
 
 -- Support Features
 local catSupport = makeCategory(mainPage, "Support Features", "🛠️")
+
+makeToggle(catSupport, "Fps Pannel", function(on)
+    if on then 
+        PingFPSMonitor.Start()
+        Notify.Send("Fps Pannel", "Pannel aktif", 4)
+    else
+        PingFPSMonitor.Stop()
+        Notify.Send("Fps Pannel", "Pannel nonaktif", 4)
+    end
+end)
 
 makeToggle(catSupport, "No Fishing Animation", function(on)
     if on then
