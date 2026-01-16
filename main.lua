@@ -309,7 +309,6 @@ local btnMinHeader = new("TextButton",{
 })
 new("UICorner",{Parent=btnMinHeader, CornerRadius=UDim.new(0, 8)})
 
-
 local btnStroke = new("UIStroke",{
     Parent=btnMinHeader,
     Color=colors.primary,
