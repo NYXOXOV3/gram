@@ -173,7 +173,6 @@ local encryptedURLs = {
     MovementModule = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6BDYgFl8oHSUADhcLABJdVEdYRG5PUUQ=",
     AutoSellSystem = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6Gjc8BTYAEycQERcWWx5HRF1nRCxPd1wtOBwDVisgKA==",
     ManualSave = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6BDYgFl8oEz0QAh42FSlXHl5BQA==",
-    EventTeleportDynamic = "...",
 }
 
 --=====================================================
