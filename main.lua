@@ -1294,10 +1294,10 @@ local catSupport = makeCategory(mainPage, "Support Features", "🛠️")
 
 makeToggle(catSupport, "Fps Pannel", function(on)
     if on then 
-        PingFPSMonitor.Start()
+        PingFPSMonitor:Show()
         Notify.Send("Fps Pannel", "Pannel aktif", 4)
     else
-        PingFPSMonitor.Stop()
+        PingFPSMonitor:Hide()
         Notify.Send("Fps Pannel", "Pannel nonaktif", 4)
     end
 end)
