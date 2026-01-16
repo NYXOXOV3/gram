@@ -15,8 +15,8 @@ local RF_Request = net:WaitForChild("RF/RequestFishingMinigameStarted")
 local RE_Complete = net:WaitForChild("RE/FishingCompleted")
 local RE_Minigame = net:WaitForChild("RE/FishingMinigameChanged")
 
-local BlatantV2 = {}
-BlatantV2.Active = false
+local BlatantV3beta = {}
+BlatantV3.Active = false
 
 -- 🔥 ABSURD TIMING
 local CHARGE_DELAY = 0.001
@@ -26,7 +26,7 @@ local FINISH_DELAY = 0
 -- Core Brutal Loop
 ------------------------------------------------
 local function insaneLoop()
-    while BlatantV2.Active do
+    while BlatantV3beta.Active do
         local t = os.clock()
 
         task.spawn(function()
@@ -49,7 +49,7 @@ end
 -- FORCE COMPLETE EVERYTHING
 ------------------------------------------------
 RE_Minigame.OnClientEvent:Connect(function()
-    if not BlatantV2.Active then return end
+    if not BlatantV3beta.Active then return end
 
     task.spawn(function()
         pcall(function()
@@ -61,14 +61,14 @@ end)
 ------------------------------------------------
 -- Public API
 ------------------------------------------------
-function BlatantV2.Start()
-    if BlatantV2.Active then return end
-    BlatantV2.Active = true
+function BlatantV3beta.Start()
+    if BlatantV3beta.Active then return end
+    BlatantV3beta.Active = true
     task.spawn(insaneLoop)
 end
 
-function BlatantV2.Stop()
-    BlatantV2.Active = false
+function BlatantV3beta.Stop()
+    BlatantV3beta.Active = false
 end
 
-return BlatantV2
+return BlatantV3beta
