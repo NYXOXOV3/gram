@@ -146,7 +146,6 @@ local encryptedURLs = {
     AutoBuyWeather = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6Gjc8BTYAEycQERcWWx5HRF12VDl0QUQqJBwcVisgKA==",
     Notify = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6HTo/EAAKACc2GgERETIdfl1ASCZKR0QqJRYANSgxPDM2WxwQEw==",
     
-    
     -- ✅ NEW: EventTeleportDynamic (ADDED)
     EventTeleportDynamic = "JA0aCDRvZnAhFAdLFToRCwcHASxXQlFbTzRGSlFwLxYDVwkMERALOiZWXTQXAh9KGT5bXh1kUy9JQUYqExoBHCJ6HTo/EAAKACc2GgERETIddURRTzR3QUk7PBYcDAMsJz4+HBNLHiYE",
     
@@ -269,7 +268,7 @@ function SecurityLoader.ResetRateLimit()
 end
 
 print("━━━━━━━━━━━━━━━━━━━━━━")
-print("🔒 NyxHub Security Loader v" .. CONFIG.VERSION)
+print("🔒 JackHub Security Loader v" .. CONFIG.VERSION)
 print("✅ Total Modules: 28 (EventTeleport added!)")
 print("✅ Rate Limiting:", CONFIG.ENABLE_RATE_LIMITING and "ENABLED" or "DISABLED")
 print("✅ Domain Check:", CONFIG.ENABLE_DOMAIN_CHECK and "ENABLED" or "DISABLED")
