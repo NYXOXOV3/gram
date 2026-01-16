@@ -1287,6 +1287,32 @@ makeInput(catBlatantV2, "Timeout Delay", 0.8, function(v)
     blatantv2.Settings.TimeoutDelay = v 
 end)
 
+-- blatant3
+-- ☠️ BLATANT V2 – INSANE / UNHINGED MODE UI
+
+local catBlatantV3 = makeCategory(
+    mainPage,
+    "☠️ BLATANT V2 – INSANE MODE",
+    "☠️"
+)
+
+-- MAIN TOGGLE (ONLY CONTROL THAT MATTERS)
+makeToggle(catBlatantV3, "☠️ ENABLE INSANE AUTO FISH", function(on)
+    if on then
+        print("☠️ INSANE MODE ENABLED – NO SAFETY, NO LIMITS")
+        blatantv3beta.Start()
+    else
+        print("🛑 INSANE MODE DISABLED")
+        blatantv3beta.Stop()
+    end
+end)
+
+-- INFO / WARNING (FAKE INPUT AS LABEL)
+makeInput(catBlatantV3, "⚠️ WARNING", "HIGH RISK / MAX SPEED", function()
+    print("☠️ You are running UNHINGED MODE. Expect desync.")
+end)
+
+
 -- Support Features
 local catSupport = makeCategory(mainPage, "Support Features", "🛠️")
 
