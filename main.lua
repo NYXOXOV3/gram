@@ -309,6 +309,25 @@ local btnMinHeader = new("TextButton",{
 })
 new("UICorner",{Parent=btnMinHeader, CornerRadius=UDim.new(0, 8)})
 
+-- Close button in header - matching minimize style
+local btnCloseHeader = new("TextButton",{
+    Parent = scriptHeader,
+    Size = UDim2.new(0, 30, 0, 30),
+    Position = UDim2.new(1, -72, 0.5, -15), -- geser ke kiri dari minimize
+    BackgroundColor3 = colors.bg4,
+    BackgroundTransparency = 0.5,
+    BorderSizePixel = 0,
+    Text = "✕",
+    Font = Enum.Font.GothamBold,
+    TextSize = 16,
+    TextColor3 = colors.textDim,
+    TextTransparency = 0.3,
+    AutoButtonColor = false,
+    ZIndex = 7
+})
+new("UICorner",{Parent = btnCloseHeader, CornerRadius = UDim.new(0, 8)})
+
+
 local btnStroke = new("UIStroke",{
     Parent=btnMinHeader,
     Color=colors.primary,
@@ -3563,6 +3582,26 @@ btnMinHeader.MouseButton1Click:Connect(function()
         createMinimizedIcon()
         minimized = true
     end
+end)
+
+btnCloseHeader.MouseButton1Click:Connect(function()
+    if isAnimating then return end
+    isAnimating = true
+
+    -- bersihin icon minimize kalau ada
+    if minimized then
+        removeMinimizedIcon()
+    end
+
+    TweenService:Create(
+        win,
+        TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+        { BackgroundTransparency = 1 }
+    ):Play()
+
+    task.delay(0.25, function()
+        gui:Destroy()
+    end)
 end)
 
 -- ==== DRAGGING SYSTEM (From Header) - Smoother ====
