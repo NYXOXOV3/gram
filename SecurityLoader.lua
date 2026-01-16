@@ -267,11 +267,11 @@ function SecurityLoader.ResetRateLimit()
     print("✅ Rate limit reset")
 end
 
-print("━━━━━━━━━━━━━━━━━━━━━━")
-print("🔒 JackHub Security Loader v" .. CONFIG.VERSION)
-print("✅ Total Modules: 28 (EventTeleport added!)")
-print("✅ Rate Limiting:", CONFIG.ENABLE_RATE_LIMITING and "ENABLED" or "DISABLED")
-print("✅ Domain Check:", CONFIG.ENABLE_DOMAIN_CHECK and "ENABLED" or "DISABLED")
-print("━━━━━━━━━━━━━━━━━━━━━━")
+-- print("━━━━━━━━━━━━━━━━━━━━━━")
+-- print("🔒 JackHub Security Loader v" .. CONFIG.VERSION)
+-- print("✅ Total Modules: 28 (EventTeleport added!)")
+-- print("✅ Rate Limiting:", CONFIG.ENABLE_RATE_LIMITING and "ENABLED" or "DISABLED")
+-- print("✅ Domain Check:", CONFIG.ENABLE_DOMAIN_CHECK and "ENABLED" or "DISABLED")
+-- print("━━━━━━━━━━━━━━━━━━━━━━")
 
 return SecurityLoader
