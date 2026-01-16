@@ -58,7 +58,7 @@ local FPSBooster = SecurityLoader.LoadModule("FPSBooster")
 local AutoBuyWeather = SecurityLoader.LoadModule("AutoBuyWeather")
 local Notify = SecurityLoader.LoadModule("Notify")
 local GoodPerfectionStable = SecurityLoader.LoadModule("GoodPerfectionStable")
-local BlatantV3beta = SecurityLoader.LoadModule("BlatantV3")
+
 
 -- Continue with rest of your GUI code...
 print("✅ All modules loaded securely!")
