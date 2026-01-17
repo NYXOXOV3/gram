@@ -16,7 +16,7 @@ local SKINS = {
         },
         ["RodThrow"] = {
             id = "rbxassetid://123133988645038",
-            speed = 1.4,
+            speed = 1.5,
             priority = Enum.AnimationPriority.Action,
             looped = false,
         },
@@ -60,7 +60,7 @@ local SKINS = {
         },
         ["RodThrow"] = {
             id = "rbxassetid://104527781253009",
-            speed = 1.4,
+            speed = 1.5,
             priority = Enum.AnimationPriority.Action,
             looped = false,
         },
