@@ -7,7 +7,7 @@ local RunService = game:GetService("RunService")
 local LP = Players.LocalPlayer
 
 local SKINS = {
-    ["1x1x1x1 Ban Hammer"] = {
+    ["1x1x1x1BanHammer"] = {
         ["EquipIdle"] = {
             id = "rbxassetid://81302570422307",
             speed = 1.0,
@@ -51,7 +51,7 @@ local SKINS = {
             looped = true,
         },
     },
-    ["Binary Edge"] = {
+    ["BinaryEdge"] = {
         ["EquipIdle"] = {
             id = "rbxassetid://103714544264522",
             speed = 1.0,
