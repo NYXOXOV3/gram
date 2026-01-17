@@ -2253,7 +2253,7 @@ do
             if success then
                 SetConfigValue("Support.SkinAnimation.Current", "1x1x1x1BanHammer")
                 
-                if Notify then Notify.Send("Skin Animation", "1x1x1x1BanHammer diaktifkan!", 4) end
+                if Notify then Notify.Send("Skin Animation", "1x1x1x1 Ban Hammer diaktifkan!", 4) end
                 if not SkinAnimation.IsEnabled() then SkinAnimation.Enable() end
             elseif Notify then
                 Notify.Send("Skin Animation", "⚠ Gagal mengganti skin!", 3)
