@@ -2245,6 +2245,38 @@ do
     -- Skin Animation
     local catSkin = makeCategory(mainPage, "Skin Animation", "✨")
 
+    makeButton(catSkin, "1x1x1x1 Ban Hammer", function()
+        local SkinAnimation = GetModule("SkinAnimation")
+        local Notify = GetModule("Notify")
+        if SkinAnimation then
+            local success = SkinAnimation.SwitchSkin("1x1x1x1 Ban Hammer")
+            if success then
+                SetConfigValue("Support.SkinAnimation.Current", "1x1x1x1 Ban Hammer")
+                
+                if Notify then Notify.Send("Skin Animation", "1x1x1x1 Ban Hammer diaktifkan!", 4) end
+                if not SkinAnimation.IsEnabled() then SkinAnimation.Enable() end
+            elseif Notify then
+                Notify.Send("Skin Animation", "⚠ Gagal mengganti skin!", 3)
+            end
+        end
+    end)
+
+    makeButton(catSkin, "Binary Edge", function()
+        local SkinAnimation = GetModule("SkinAnimation")
+        local Notify = GetModule("Notify")
+        if SkinAnimation then
+            local success = SkinAnimation.SwitchSkin("Binary Edge")
+            if success then
+                SetConfigValue("Support.SkinAnimation.Current", "Binary Edge")
+                
+                if Notify then Notify.Send("Skin Animation", "Binary Edge diaktifkan!", 4) end
+                if not SkinAnimation.IsEnabled() then SkinAnimation.Enable() end
+            elseif Notify then
+                Notify.Send("Skin Animation", "⚠ Gagal mengganti skin!", 3)
+            end
+        end
+    end)
+
     makeButton(catSkin, "⚔️ Eclipse Katana", function()
         local SkinAnimation = GetModule("SkinAnimation")
         local Notify = GetModule("Notify")
