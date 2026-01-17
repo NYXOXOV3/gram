@@ -7,6 +7,94 @@ local RunService = game:GetService("RunService")
 local LP = Players.LocalPlayer
 
 local SKINS = {
+    ["1x1x1x1 Ban Hammer"] = {
+        ["EquipIdle"] = {
+            id = "rbxassetid://81302570422307",
+            speed = 1.0,
+            priority = Enum.AnimationPriority.Core,
+            looped = true,
+        },
+        ["RodThrow"] = {
+            id = "rbxassetid://123133988645038",
+            speed = 1.4,
+            priority = Enum.AnimationPriority.Action,
+            looped = false,
+        },
+        ["FishCaught"] = {
+            id = "rbxassetid://96285280763544",
+            speed = 1.0,
+            priority = Enum.AnimationPriority.Action4,
+            looped = false,
+        },
+        ["ReelingIdle"] = {
+            id = "rbxassetid://74643095451174",
+            speed = 1.0,
+            priority = Enum.AnimationPriority.Idle,
+            looped = true,
+        },
+        ["ReelStart"] = {
+            id = "rbxassetid://74643095451174",
+            speed = 1.0,
+            priority = Enum.AnimationPriority.Idle,
+            looped = false,
+        },
+        ["ReelIntermission"] = {
+            id = "rbxassetid://74643095451174",
+            speed = 1.0,
+            priority = Enum.AnimationPriority.Idle,
+            looped = true,
+        },
+        ["StartRodCharge"] = {
+            id = "rbxassetid://134431618143422",
+            speed = 1.0,
+            priority = Enum.AnimationPriority.Idle,
+            looped = true,
+        },
+    },
+    ["Binary Edge"] = {
+        ["EquipIdle"] = {
+            id = "rbxassetid://103714544264522",
+            speed = 1.0,
+            priority = Enum.AnimationPriority.Core,
+            looped = true,
+        },
+        ["RodThrow"] = {
+            id = "rbxassetid://104527781253009",
+            speed = 1.4,
+            priority = Enum.AnimationPriority.Action,
+            looped = false,
+        },
+        ["FishCaught"] = {
+            id = "rbxassetid://109653945741202",
+            speed = 1.0,
+            priority = Enum.AnimationPriority.Action4,
+            looped = false,
+        },
+        ["ReelingIdle"] = {
+            id = "rbxassetid://81700883907369",
+            speed = 1.0,
+            priority = Enum.AnimationPriority.Idle,
+            looped = true,
+        },
+        ["ReelStart"] = {
+            id = "rbxassetid://81700883907369",
+            speed = 1.0,
+            priority = Enum.AnimationPriority.Idle,
+            looped = false,
+        },
+        ["ReelIntermission"] = {
+            id = "rbxassetid://81700883907369",
+            speed = 1.0,
+            priority = Enum.AnimationPriority.Idle,
+            looped = true,
+        },
+        ["StartRodCharge"] = {
+            id = "rbxassetid://72745361965091",
+            speed = 1.0,
+            priority = Enum.AnimationPriority.Idle,
+            looped = true,
+        },
+    },
     ["Eclipse"] = {
         ["EquipIdle"] = {
             id = "rbxassetid://103641983335689",
