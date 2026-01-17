@@ -2251,9 +2251,9 @@ do
         if SkinAnimation then
             local success = SkinAnimation.SwitchSkin("1x1x1x1 Ban Hammer")
             if success then
-                SetConfigValue("Support.SkinAnimation.Current", "1x1x1x1 Ban Hammer")
+                SetConfigValue("Support.SkinAnimation.Current", "1x1x1x1BanHammer")
                 
-                if Notify then Notify.Send("Skin Animation", "1x1x1x1 Ban Hammer diaktifkan!", 4) end
+                if Notify then Notify.Send("Skin Animation", "1x1x1x1BanHammer diaktifkan!", 4) end
                 if not SkinAnimation.IsEnabled() then SkinAnimation.Enable() end
             elseif Notify then
                 Notify.Send("Skin Animation", "⚠ Gagal mengganti skin!", 3)
@@ -2265,9 +2265,9 @@ do
         local SkinAnimation = GetModule("SkinAnimation")
         local Notify = GetModule("Notify")
         if SkinAnimation then
-            local success = SkinAnimation.SwitchSkin("Binary Edge")
+            local success = SkinAnimation.SwitchSkin("BinaryEdge")
             if success then
-                SetConfigValue("Support.SkinAnimation.Current", "Binary Edge")
+                SetConfigValue("Support.SkinAnimation.Current", "BinaryEdge")
                 
                 if Notify then Notify.Send("Skin Animation", "Binary Edge diaktifkan!", 4) end
                 if not SkinAnimation.IsEnabled() then SkinAnimation.Enable() end
