@@ -64,7 +64,7 @@ local fishing = {
         FishingDelay = 0.01,
         CancelDelay = initialCancelDelay,
         HookDetectionDelay = 0.05,
-        RetryDelay = 0.1,
+        RetryDelay = 0.05,
         MaxWaitTime = initialMaxWait,
     }
 }
@@ -111,9 +111,9 @@ function fishing.Cast()
     fishing.CurrentCycle += 1
 
     local castSuccess = pcall(function()
-        RF_ChargeFishingRod:InvokeServer({[10] = tick()})
-        task.wait(0.07)
-        RF_RequestMinigame:InvokeServer(9, 0, tick())
+        RF_ChargeFishingRod:InvokeServer({[1] = tick()})
+        task.wait(0.01)
+        RF_RequestMinigame:InvokeServer(1, 0, tick())
         fishing.WaitingHook = true
 
         task.delay(fishing.Settings.MaxWaitTime * 0.7, function()
